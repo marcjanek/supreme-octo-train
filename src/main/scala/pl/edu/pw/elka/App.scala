@@ -14,6 +14,10 @@ import akka.actor.typed.{ DispatcherSelector, Terminated }
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+import org.apache.log4j.Logger
+import org.apache.log4j.BasicConfigurator
+
+
 object App {
   //format: OFF
   //#fiddle_code
@@ -62,6 +66,7 @@ object App {
   }
   //#hello-world-bot
   def main(args: Array[String]): Unit = {
+    BasicConfigurator.configure
     val system: ActorSystem[HelloWorldMain.SayHello] =
       ActorSystem(HelloWorldMain(), "hello")
 
