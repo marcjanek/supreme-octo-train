@@ -27,10 +27,10 @@ class TrafficLight extends Actor {
     case UpdateActiveLight(newLight: Int) =>
       context.become(onMessage(newLight, newLight +: historyData))
     case CurrentLight =>
-      sender() ! TrafficLightState
+      sender() ! activeLight
 //      log.info(activeLight.toString)
     case HistoryData =>
-      sender() ! TrafficLightHistory
+      sender() ! historyData
 //      log.info(historyData.toString())
     case Stop =>
       context.stop(self)
