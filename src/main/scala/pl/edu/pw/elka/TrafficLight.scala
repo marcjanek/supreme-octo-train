@@ -13,12 +13,23 @@ object TrafficLight {
   case object Stop
   case object HistoryData
 }
+object TrafficLightLaneEnum extends Enumeration {
+  type TrafficLightId = Value
 
-class TrafficLight extends Actor {
+  val P, L = Value
+}
+
+object TrafficLaneLaneEnum extends Enumeration {
+  type RoadId = Value
+
+  val A, B, C, D = Value
+}
+
+
+class TrafficLight(val laneId: TrafficLightLaneEnum.TrafficLightId , val roadId: TrafficLaneLaneEnum.RoadId) extends Actor {
   var log: LoggingAdapter = Logging(context.system, this)
   private val TrafficLightState = 0
   private val TrafficLightHistory = Vector.empty
-
   import TrafficLight._
 
   def receive: Receive = onMessage(TrafficLightState, TrafficLightHistory)
@@ -27,16 +38,18 @@ class TrafficLight extends Actor {
     case UpdateActiveLight(newLight: Int) =>
       context.become(onMessage(newLight, newLight +: historyData))
     case CurrentLight =>
-      sender() ! activeLight
-//      log.info(activeLight.toString)
+      //sender() ! activeLight
+      log.info(activeLight.toString)
     case HistoryData =>
-      sender() ! historyData
-//      log.info(historyData.toString())
+      //sender() ! historyData
+      log.info(historyData.toString())
     case Stop =>
       context.stop(self)
 //    case _ =>
 //      throw Exception
   }
+
+
 }
 
 //object Main {
