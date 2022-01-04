@@ -1,11 +1,9 @@
-package pl.edu.pw.elka
+package pl.edu.pw.elka.akka
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.Actor
 import akka.event.{Logging, LoggingAdapter}
-import org.apache.log4j.BasicConfigurator
 
-import collection.immutable.Vector
-import pl.edu.pw.elka.TrafficLight.{CurrentLight, HistoryData, Stop, UpdateActiveLight}
+import scala.collection.immutable.Vector
 
 object TrafficLight {
   case class UpdateActiveLight(newLight: Int)
