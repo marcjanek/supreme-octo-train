@@ -46,7 +46,7 @@ class Manager extends Actor {
 }
 
 object Main {
-  def main(Args: Array[String]): Unit = {
+  def main(): Unit = {
     BasicConfigurator.configure()
     val system = ActorSystem("test")
     val testManager = system.actorOf(Props[Manager](), "Manager")
