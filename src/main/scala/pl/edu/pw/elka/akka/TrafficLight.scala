@@ -1,8 +1,8 @@
 package pl.edu.pw.elka.akka
 
 import akka.actor.Actor
-import pl.edu.pw.elka.enums.Light
-import pl.edu.pw.elka.akka.Manager.LightStatusResponse
+import pl.edu.pw.elka.enums.{Light, Roads, Lanes}
+import pl.edu.pw.elka.akka.Manager.{LightStatusResponse, TrafficLightHistoryResponse}
 
 import scala.collection.immutable.Vector
 
@@ -13,19 +13,7 @@ object TrafficLight {
   case object HistoryData
 }
 
-object TrafficLightLaneEnum extends Enumeration {
-  type TrafficLightId = Value
-
-  val P, L = Value
-}
-
-object TrafficLaneLaneEnum extends Enumeration {
-  type RoadId = Value
-
-  val A, B, C, D = Value
-}
-
-class TrafficLight(val laneId: TrafficLightLaneEnum.TrafficLightId, val roadId: TrafficLaneLaneEnum.RoadId) extends Actor {
+class TrafficLight(val laneId: Lanes, val roadId: Roads) extends Actor {
   import TrafficLight._
 
   private val TrafficLightState = Light.RED
@@ -36,12 +24,16 @@ class TrafficLight(val laneId: TrafficLightLaneEnum.TrafficLightId, val roadId: 
   private def onMessage(activeLight: Light, historyData: Vector[Light]): Receive = {
     case UpdateActiveLight(newLight) =>
       context.become(onMessage(newLight, newLight +: historyData))
+//      todo: addToDatabase
     case CurrentLight =>
       sender() ! LightStatusResponse(self, activeLight)
+
     case HistoryData =>
-      sender() ! LightStatusResponse(self, activeLight)
+      sender() ! TrafficLightHistoryResponse(self, historyData)
+
     case Stop =>
       context.stop(self)
+
     //    case _ =>
     //      throw Exception
   }

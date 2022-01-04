@@ -15,7 +15,7 @@ object LaneCounter {
   case object Stop
 }
 
-class LaneCounter(val trafficLightId: Lanes, val roadId: Roads) extends Actor {//laneId in [A|B|C|D][P1|P2|L]
+class LaneCounter(val trafficLightId: Lanes, val roadId: Roads) extends Actor {
   import LaneCounter._
   var log: LoggingAdapter = Logging(context.system, this)
 
@@ -33,7 +33,7 @@ class LaneCounter(val trafficLightId: Lanes, val roadId: Roads) extends Actor {/
       context.become(onMessage(Vector.empty))
     case Stop =>
       context.stop(self)
-//    case _ =>
-//      throw Exception
+    //    case _ =>
+    //      throw Exception
   }
 }
