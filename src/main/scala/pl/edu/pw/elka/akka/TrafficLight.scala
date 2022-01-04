@@ -2,38 +2,27 @@ package pl.edu.pw.elka.akka
 
 import akka.actor.Actor
 import akka.event.{Logging, LoggingAdapter}
+import pl.edu.pw.elka.enums.{Lanes, Light, Roads}
 
 import scala.collection.immutable.Vector
 
 object TrafficLight {
-  case class UpdateActiveLight(newLight: Int)
+  case class UpdateActiveLight(newLight: Light)
   case object CurrentLight
   case object Stop
   case object HistoryData
 }
-object TrafficLightLaneEnum extends Enumeration {
-  type TrafficLightId = Value
 
-  val P, L = Value
-}
-
-object TrafficLaneLaneEnum extends Enumeration {
-  type RoadId = Value
-
-  val A, B, C, D = Value
-}
-
-
-class TrafficLight(val laneId: TrafficLightLaneEnum.TrafficLightId , val roadId: TrafficLaneLaneEnum.RoadId) extends Actor {
+class TrafficLight(val laneId:  Lanes , val roadId: Roads) extends Actor {
   var log: LoggingAdapter = Logging(context.system, this)
-  private val TrafficLightState = 0
+  private val TrafficLightState = Light.RED
   private val TrafficLightHistory = Vector.empty
   import TrafficLight._
 
   def receive: Receive = onMessage(TrafficLightState, TrafficLightHistory)
 
-  private def onMessage(activeLight: Int, historyData: Vector[Int]): Receive = {
-    case UpdateActiveLight(newLight: Int) =>
+  private def onMessage(activeLight: Light, historyData: Vector[Light]): Receive = {
+    case UpdateActiveLight(newLight) =>
       context.become(onMessage(newLight, newLight +: historyData))
     case CurrentLight =>
       //sender() ! activeLight
@@ -46,18 +35,4 @@ class TrafficLight(val laneId: TrafficLightLaneEnum.TrafficLightId , val roadId:
 //    case _ =>
 //      throw Exception
   }
-
-
 }
-
-//object Main {
-//  def main(Args: Array[String]): Unit = {
-//    BasicConfigurator.configure()
-//    val system = ActorSystem("test")
-//    val testActor = system.actorOf(Props[TrafficLight](), "test")
-//    testActor ! UpdateActiveLight(8)
-//    testActor ! HistoryData
-//    testActor ! CurrentLight
-//    testActor ! Stop
-//  }
-//}
