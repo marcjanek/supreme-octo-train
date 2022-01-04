@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import akka.event.{Logging, LoggingAdapter}
 import org.apache.log4j.BasicConfigurator
 import pl.edu.pw.elka.akka.LaneCounter.{CountCarsOnLane, NewDetectorsData}
+import pl.edu.pw.elka.enums.{Lanes, Lights, Roads}
 
 import scala.collection.immutable.Vector
 import scala.concurrent.duration._
@@ -14,13 +15,7 @@ object LaneCounter {
   case object Stop
 }
 
-object TrafficLightEnum extends Enumeration {
-  type TrafficLaneId = Value
-
-  val P1, P2, L = Value
-}
-
-class LaneCounter(val trafficLightId: TrafficLightEnum.TrafficLaneId, val roadId: TrafficLaneLaneEnum.RoadId) extends Actor {//laneId in [A|B|C|D][P1|P2|L]
+class LaneCounter(val trafficLightId: Lanes, val roadId: Roads) extends Actor {//laneId in [A|B|C|D][P1|P2|L]
   import LaneCounter._
   var log: LoggingAdapter = Logging(context.system, this)
 
@@ -47,7 +42,7 @@ object Main {
   def main(Args: Array[String]): Unit = {
     BasicConfigurator.configure()
     val system = ActorSystem("test")
-    val testLaneCounter = system.actorOf(Props(new LaneCounter(TrafficLightEnum.P1, TrafficLaneLaneEnum.A)), "counter")
+    val testLaneCounter = system.actorOf(Props(new LaneCounter(Lanes.P1, Roads.A)), "counter")
 
     import system.dispatcher
 

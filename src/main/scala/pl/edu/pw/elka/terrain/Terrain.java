@@ -1,6 +1,7 @@
 package pl.edu.pw.elka.terrain;
 
 import lombok.Data;
+import pl.edu.pw.elka.enums.Light;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -65,14 +66,14 @@ class Terrain extends JPanel {
         map = map.getScaledInstance((int) (screenSize.getWidth()/2), (int) (screenSize.getHeight()/2), Image.SCALE_SMOOTH);
         graphics.drawImage(map, 0,0,null);
         for (Lane lane : this.getLanes()) {
-            graphics.drawImage(Lane.images.get(lane.getTrafficLight()), lane.centerX,lane.centerY,null);
+            graphics.drawImage(Lane.images.get(lane.getLight()), lane.centerX,lane.centerY,null);
             graphics.drawString(lane.getNumberOfCars().toString(), lane.centerXText,lane.centerYText);
         }
 
 //       super.paintComponent(graphics);
     }
 
-    public void changeLight(final TrafficLight newState, final String junction, final String road, final String lane){
+    public void changeLight(final Light newState, final String junction, final String road, final String lane){
         this.junctions.get(junction).roads.get(road).setLaneState(lane, newState);
         repaint();
     }

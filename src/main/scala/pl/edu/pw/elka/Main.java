@@ -1,9 +1,5 @@
 package pl.edu.pw.elka;
 
-import pl.edu.pw.elka.terrain.Terrain;
-import pl.edu.pw.elka.terrain.TrafficLight;
-import pl.edu.pw.elka.terrain.XJunction;
-
 //public class Main {
 //    public static void main(String []args) {
 //        Terrain terrain = new Terrain();
