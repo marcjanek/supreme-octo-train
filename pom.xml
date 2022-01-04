@@ -133,6 +133,12 @@
       <version>5.2.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.github.etspaceman</groupId>
+      <artifactId>scalacheck-faker_${scala.compat.version}</artifactId>
+      <version>7.0.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
