@@ -1,12 +1,12 @@
-package pl.edu.pw.elka
+package pl.edu.pw.elka.akka
 
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.event.{Logging, LoggingAdapter}
 import org.apache.log4j.BasicConfigurator
-import pl.edu.pw.elka.LaneCounter.{CountCarsOnLane, NewDetectorsData}
+import pl.edu.pw.elka.akka.LaneCounter.{CountCarsOnLane, NewDetectorsData}
 
+import scala.collection.immutable.Vector
 import scala.concurrent.duration._
-import collection.immutable.Vector
 
 object LaneCounter {
   case class NewDetectorsData(newData: Int)
