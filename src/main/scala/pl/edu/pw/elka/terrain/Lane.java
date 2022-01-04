@@ -1,10 +1,10 @@
 package pl.edu.pw.elka.terrain;
 
 import lombok.*;
+import pl.edu.pw.elka.enums.Light;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,12 +12,12 @@ import java.util.Map;
 
 @Data
 class Lane {
-    public static final Map<TrafficLight, Image> images;
+    public static final Map<Light, Image> images;
     static {
         images = new HashMap<>();
         try {
-            images.put(TrafficLight.GREEN,  ImageIO.read(new File(TrafficLight.GREEN.state)).getScaledInstance(10, 10, Image.SCALE_SMOOTH));
-            images.put(TrafficLight.RED, ImageIO.read(new File(TrafficLight.RED.state)).getScaledInstance(10, 10, Image.SCALE_SMOOTH));
+            images.put(Light.GREEN,  ImageIO.read(new File(Light.GREEN.getImagePath())).getScaledInstance(10, 10, Image.SCALE_SMOOTH));
+            images.put(Light.RED, ImageIO.read(new File(Light.RED.getImagePath())).getScaledInstance(10, 10, Image.SCALE_SMOOTH));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -25,7 +25,7 @@ class Lane {
 
     final String id;
 
-    TrafficLight trafficLight = TrafficLight.RED;
+    Light light = Light.RED;
     Long numberOfCars = 99L;
 
     final Integer centerX;

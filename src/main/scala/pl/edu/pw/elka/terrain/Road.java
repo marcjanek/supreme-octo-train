@@ -1,5 +1,7 @@
 package pl.edu.pw.elka.terrain;
 
+import pl.edu.pw.elka.enums.Light;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,15 +51,15 @@ class Road {
         Lane p1 = this.lanes.get(lane);
         p1.numberOfCars = carsNumber;
     }
-    public void setLaneState(final String lane, final TrafficLight newState){
+    public void setLaneState(final String lane, final Light newState){
         if(lane.equals("P2")){
             Lane p1 = this.lanes.get("P1");
-            p1.trafficLight = newState;
+            p1.light = newState;
         } else if(lane.equals("P1")){
             Lane p1 = this.lanes.get("P2");
-            p1.trafficLight = newState;
+            p1.light = newState;
         }
         Lane p1 = this.lanes.get(lane);
-        p1.trafficLight = newState;
+        p1.light = newState;
     }
 }

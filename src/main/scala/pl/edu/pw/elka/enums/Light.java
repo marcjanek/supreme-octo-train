@@ -7,4 +7,11 @@ public enum Light {
     Light(final boolean s){
         this.state = s;
     }
+    public String getImagePath(){
+        if (state == Light.GREEN.state){
+            return "src/main/resources/green.png";
+        } else {
+            return "src/main/resources/red.png";
+        }
+    }
 }

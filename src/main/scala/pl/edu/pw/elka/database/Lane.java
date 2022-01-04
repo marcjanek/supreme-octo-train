@@ -2,10 +2,10 @@ package pl.edu.pw.elka.database;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import pl.edu.pw.elka.terrain.TrafficLight;
+import pl.edu.pw.elka.enums.Light;
 
 @Data @AllArgsConstructor
 class Lane {
-    TrafficLight trafficLight = TrafficLight.RED;
+    Light light = Light.RED;
     Long numberOfCars = 99L;
 }
