@@ -1,10 +1,20 @@
 package pl.edu.pw.elka.knowledgeDatabase;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import pl.edu.pw.elka.enums.TrafficLightStates;
 
-import java.util.HashSet;
+public abstract class Junction {
+	protected final HashMap<TrafficLightStates, HashSet<TrafficLightStates>> states = new HashMap<>();
 
-interface Junction {
-    boolean isAllowed(final TrafficLightStates key1, final TrafficLightStates key2);
-    HashSet<TrafficLightStates> allowedStates(final TrafficLightStates key1);
+	protected abstract void initializeAllowedStates();
+
+	public boolean isAllowed(final TrafficLightStates key1, final TrafficLightStates key2) {
+		return states.get(key1).contains(key2);
+	}
+
+	public HashSet<TrafficLightStates> allowedStates(final TrafficLightStates key1) {
+		return states.get(key1);
+	}
+
 }

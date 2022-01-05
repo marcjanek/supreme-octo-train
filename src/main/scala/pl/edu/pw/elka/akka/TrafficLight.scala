@@ -1,8 +1,8 @@
 package pl.edu.pw.elka.akka
 
 import akka.actor.Actor
-import akka.event.{Logging, LoggingAdapter}
-import pl.edu.pw.elka.enums.{Lanes, Light, Roads}
+import pl.edu.pw.elka.enums.{Light, Roads, Lanes}
+import pl.edu.pw.elka.akka.Manager.{LightStatusResponse, TrafficLightHistoryResponse}
 
 import scala.collection.immutable.Vector
 
@@ -13,26 +13,28 @@ object TrafficLight {
   case object HistoryData
 }
 
-class TrafficLight(val laneId:  Lanes , val roadId: Roads) extends Actor {
-  var log: LoggingAdapter = Logging(context.system, this)
+class TrafficLight(val laneId: Lanes, val roadId: Roads) extends Actor {
+  import TrafficLight._
+
   private val TrafficLightState = Light.RED
   private val TrafficLightHistory = Vector.empty
-  import TrafficLight._
 
   def receive: Receive = onMessage(TrafficLightState, TrafficLightHistory)
 
   private def onMessage(activeLight: Light, historyData: Vector[Light]): Receive = {
     case UpdateActiveLight(newLight) =>
       context.become(onMessage(newLight, newLight +: historyData))
+//      todo: addToDatabase
     case CurrentLight =>
-      //sender() ! activeLight
-      log.info(activeLight.toString)
+      sender() ! LightStatusResponse(self, activeLight)
+
     case HistoryData =>
-      //sender() ! historyData
-      log.info(historyData.toString())
+      sender() ! TrafficLightHistoryResponse(self, historyData)
+
     case Stop =>
       context.stop(self)
-//    case _ =>
-//      throw Exception
+
+    //    case _ =>
+    //      throw Exception
   }
 }
