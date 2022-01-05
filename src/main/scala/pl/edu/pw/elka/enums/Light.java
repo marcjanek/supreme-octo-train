@@ -14,4 +14,8 @@ public enum Light {
             return "src/main/resources/red.png";
         }
     }
+
+    public int getValue() {
+        return (state == Light.GREEN.state ? 1 : 0);
+    }
 }

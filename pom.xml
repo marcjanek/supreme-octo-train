@@ -133,6 +133,12 @@
       <version>5.2.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.github.etspaceman</groupId>
+      <artifactId>scalacheck-faker_${scala.compat.version}</artifactId>
+      <version>7.0.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -145,6 +151,21 @@
         <artifactId>scala-maven-plugin</artifactId>
         <version>3.3.2</version>
         <executions>
+          <execution>
+              <id>scala-compile</id>
+              <phase>process-resources</phase>
+              <goals>
+                  <goal>add-source</goal>
+                  <goal>compile</goal>
+              </goals>
+          </execution>
+          <execution>
+              <id>scala-test-compile</id>
+              <phase>process-test-resources</phase>
+              <goals>
+                  <goal>testCompile</goal>
+              </goals>
+          </execution>
           <execution>
             <goals>
               <goal>compile</goal>
