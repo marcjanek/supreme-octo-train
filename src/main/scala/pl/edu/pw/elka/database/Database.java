@@ -1,6 +1,8 @@
 package pl.edu.pw.elka.database;
 
+import pl.edu.pw.elka.enums.Lanes;
 import pl.edu.pw.elka.enums.Light;
+import pl.edu.pw.elka.enums.Roads;
 
 import java.util.HashMap;
 
@@ -26,6 +28,22 @@ public final class Database {
     public synchronized void createLane(final String junction, final String road, final String lane){
         createLane(junction, road, lane, Light.RED, 0L);
     }
+    public void createXJunction(final String junction){
+        createLane(junction, Roads.A.state, Lanes.L.state);
+        createLane(junction, Roads.A.state, Lanes.P1.state);
+        createLane(junction, Roads.A.state, Lanes.P2.state);
+        createLane(junction, Roads.B.state, Lanes.L.state);
+        createLane(junction, Roads.B.state, Lanes.P1.state);
+        createLane(junction, Roads.B.state, Lanes.P2.state);
+        createLane(junction, Roads.C.state, Lanes.L.state);
+        createLane(junction, Roads.C.state, Lanes.P1.state);
+        createLane(junction, Roads.C.state, Lanes.P2.state);
+        createLane(junction, Roads.D.state, Lanes.L.state);
+        createLane(junction, Roads.D.state, Lanes.P1.state);
+        createLane(junction, Roads.D.state, Lanes.P2.state);
+    }
+
+
     private String hashmapKey(final String junction, final String road, final String lane){
         return junction + road + lane;
     }

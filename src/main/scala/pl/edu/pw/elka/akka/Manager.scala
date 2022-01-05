@@ -66,7 +66,7 @@ class TrafficLightState (
 //map{actorRef->State}
 
 object Main {
-  def main(Args: Array[String]): Unit = {
+  def main(): Unit = {
     BasicConfigurator.configure()
     val system = ActorSystem("test")
     val testManager = system.actorOf(Props(new Manager(JunctionType.X)), "Manager")
