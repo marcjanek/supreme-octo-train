@@ -5,7 +5,7 @@ import akka.event.{Logging, LoggingAdapter}
 import org.apache.log4j.BasicConfigurator
 import pl.edu.pw.elka.akka.Manager.{AskForLightStatus, GetTrafficLightHistory, NewLight}
 import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData}
-import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Roads}
+import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
 
 import scala.collection.immutable.{Map, Vector}
 
@@ -53,6 +53,17 @@ class Manager(val junctionType: JunctionType) extends Actor {
 //      throw Exception
   }
 }
+
+class TrafficLightState (
+                           val actorRef: ActorRef, //pointer
+                           val currentLight: Light, //RED/GREEN
+                           val road: Roads, //A/B/C/D
+                           val historyData: Vector[Light], //[RED, GREEN, RED, GREEN...]
+                           val counters: Map[Lights, Int] //[P1 -> 10, P2 -> 30]/[L->15]
+                         ) {
+}
+
+//map{actorRef->State}
 
 object Main {
   def main(Args: Array[String]): Unit = {
