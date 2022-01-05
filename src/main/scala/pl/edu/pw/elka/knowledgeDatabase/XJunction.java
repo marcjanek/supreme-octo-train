@@ -6,7 +6,6 @@ import pl.edu.pw.elka.enums.TrafficLightStates;
 
 class XJunction extends Junction {
 	XJunction() {
-		super();
 		initializeAllowedStates();
 	}
 

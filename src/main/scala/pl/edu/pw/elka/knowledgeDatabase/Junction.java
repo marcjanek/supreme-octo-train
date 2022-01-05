@@ -9,10 +9,6 @@ public abstract class Junction {
 
 	protected abstract void initializeAllowedStates();
 
-	public Junction() {
-
-	}
-
 	public boolean isAllowed(final TrafficLightStates key1, final TrafficLightStates key2) {
 		return states.get(key1).contains(key2);
 	}
