@@ -3,33 +3,31 @@ package pl.edu.pw.elka.akka
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.event.{Logging, LoggingAdapter}
 import org.apache.log4j.BasicConfigurator
-import pl.edu.pw.elka.akka.Manager.{AskForLightStatus, GetTrafficLightHistory, NewLight}
+import pl.edu.pw.elka.akka.Manager.{AskForLightStatus, GetTrafficLightHistory}
 import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData}
 import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
 
 import scala.collection.immutable.{Map, Vector}
 
 object Manager {
-  case class NewLight(lane: Lanes, road: Roads)
   case class GetTrafficLightHistory()
   case class AskForLightStatus()
   case class LightStatusResponse(actorRef: ActorRef, light: Light)
   case class TrafficLightHistoryResponse(actorRef: ActorRef, History: Vector[Light])
   case class NewLightState(state: Map[ActorRef, Light])
+  case object CountCarsOnLanes
+
+  def props(junctionID: String, roads: Roads, lights: Lights): Props = Props(new TrafficLight(junctionID, roads, lights))
 }
 
-class Manager(val junctionType: JunctionType) extends Actor {
+class Manager(val junctionType: JunctionType, val junctionID: String) extends Actor {
   import Manager._
-  private val currentState = Map.empty[ActorRef, Light]
+  private val currentState = createFirstState()
   var log: LoggingAdapter = Logging(context.system, this)
 
   def receive: Receive = onMessage(currentState)
 
   private def onMessage(state: Map[ActorRef, Light]): Receive = {
-    case NewLight(lane: Lanes, road: Roads) =>
-      val child = context.actorOf(Props(new TrafficLight(lane, road)))
-      context.become(onMessage(state = state + (child -> Light.RED)))
-
     case GetTrafficLightHistory =>
       for((child, _) <- state) {
         child ! HistoryData
@@ -52,14 +50,32 @@ class Manager(val junctionType: JunctionType) extends Actor {
     //  case _ =>
 //      throw Exception
   }
+
+  private def createFirstState(): Map[ActorRef, Light] = {
+    var firstState = Map.empty[ActorRef, Light]
+
+    for (light <- Lights.values()) {
+      if (junctionType.state.equals(JunctionType.X.state)) {
+        for (road <- Roads.values()) {
+          val child = context.actorOf(Manager.props(junctionID, road, light))
+          firstState = firstState + (child -> Light.RED)
+        }
+      } else {
+        for (road <- List(Roads.A, Roads.B, Roads.C)){
+          val child = context.actorOf(Manager.props(junctionID, road, light))
+          firstState = firstState + (child -> Light.RED)
+        }
+      }
+    }
+    firstState
+  }
 }
 
 class TrafficLightState (
                            val actorRef: ActorRef, //pointer
-                           val currentLight: Light, //RED/GREEN
                            val road: Roads, //A/B/C/D
                            val historyData: Vector[Light], //[RED, GREEN, RED, GREEN...]
-                           val counters: Map[Lights, Int] //[P1 -> 10, P2 -> 30]/[L->15]
+                           val counters: Map[Lanes, Long] //[P1 -> 10, P2 -> 30]/[L->15]
                          ) {
 }
 
@@ -69,11 +85,7 @@ object Main {
   def main(): Unit = {
     BasicConfigurator.configure()
     val system = ActorSystem("test")
-    val testManager = system.actorOf(Props(new Manager(JunctionType.X)), "Manager")
-
-    testManager ! NewLight(Lanes.P1, Roads.A)
-    testManager ! NewLight(Lanes.L, Roads.B)
-    testManager ! NewLight(Lanes.P2, Roads.C)
-    testManager ! AskForLightStatus
+    val testManager1 = system.actorOf(Props(new Manager(JunctionType.X, "1")), "1")
+    val testManager2 = system.actorOf(Props(new Manager(JunctionType.X, "2")), "2")
   }
 }

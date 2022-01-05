@@ -27,23 +27,24 @@ public class Main {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                for(int lane=0;lane<3;++lane){
+                for (Lanes lane : Lanes.values()) {
                     //                xJunctions
                     for (int junction=1;junction<=2;++junction){
-                        for(int road=0;road<4;++road){
-//                            cars number
-                            final Long carsNumber = database.getCarsNumber(String.valueOf(junction), Roads.getByIndex(road), Lanes.getByIndex(lane));
-                            terrain.changeCarsNumber(carsNumber, String.valueOf(junction), Roads.getByIndex(road), Lanes.getByIndex(lane));
+                        for (Roads road : Roads.values()) {
+                            final Long carsNumber = database.getCarsNumber(String.valueOf(junction), road, lane);
+                            terrain.changeCarsNumber(carsNumber, String.valueOf(junction), road.state, lane.state);
 //                            light
-                            final Light light = database.getTrafficLight(String.valueOf(junction), Roads.getByIndex(road), Lanes.getByIndex(lane));
-                            terrain.changeLight(light, String.valueOf(junction), Roads.getByIndex(road), Lanes.getByIndex(lane));
+                            final Light light = database.getTrafficLight(String.valueOf(junction), road, lane);
+                            terrain.changeLight(light, String.valueOf(junction), road.state, lane.state);
                         }
                     }
                     //                yJunctions
-
                 }
             }
         }, 0, 1000); // Create Repetitively task for every 1 secs
+//        start generator
+//        new Timer().schedule(new Generator, 0, 1000);
+
 //        Akka
         pl.edu.pw.elka.akka.Main.main();
     }
