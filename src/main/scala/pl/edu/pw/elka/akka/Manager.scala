@@ -56,10 +56,9 @@ class Manager(val junctionType: JunctionType) extends Actor {
 
 class TrafficLightState (
                            val actorRef: ActorRef, //pointer
-                           val currentLight: Light, //RED/GREEN
                            val road: Roads, //A/B/C/D
                            val historyData: Vector[Light], //[RED, GREEN, RED, GREEN...]
-                           val counters: Map[Lights, Int] //[P1 -> 10, P2 -> 30]/[L->15]
+                           val counters: Map[Lanes, Int] //[P1 -> 10, P2 -> 30]/[L->15]
                          ) {
 }
 
