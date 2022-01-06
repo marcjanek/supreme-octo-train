@@ -1,12 +1,11 @@
 package pl.edu.pw.elka.akka
 
 import akka.actor.Actor
-import pl.edu.pw.elka.akka.TrafficLight.CarNumberResponse
+import pl.edu.pw.elka.akka.TrafficLight.{CarNumberResponse, CountCarsOnLane}
 import pl.edu.pw.elka.enums.{Lanes, Roads}
 
 object LaneCounter {
   case class NewDetectorsData(newData: Int)
-  case object CountCarsOnLane
   case object Stop
 }
 

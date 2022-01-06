@@ -1,13 +1,20 @@
 package pl.edu.pw.elka.akka
 
+import akka.actor.TypedActor.dispatcher
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.event.{Logging, LoggingAdapter}
+import akka.pattern.ask
 import org.apache.log4j.BasicConfigurator
-import pl.edu.pw.elka.akka.Manager.{AskForLightStatus, GetTrafficLightHistory}
-import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData}
+import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData, UpdateActiveLight}
 import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
 
 import scala.collection.immutable.{Map, Vector}
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
+import akka.util.Timeout
+import pl.edu.pw.elka.akka.Manager.ComputeNewState
+import pl.edu.pw.elka.algorithm.Planner
 
 object Manager {
   case class GetTrafficLightHistory()
@@ -15,7 +22,8 @@ object Manager {
   case class LightStatusResponse(actorRef: ActorRef, light: Light)
   case class TrafficLightHistoryResponse(actorRef: ActorRef, History: Vector[Light])
   case class NewLightState(state: Map[ActorRef, Light])
-  case object CountCarsOnLanes
+  case object ComputeNewState
+  case class CountCarsOnLanesResponse(state: TrafficLightState)
 
   def props(junctionID: String, roads: Roads, lights: Lights): Props = Props(new TrafficLight(junctionID, roads, lights))
 }
@@ -23,6 +31,7 @@ object Manager {
 class Manager(val junctionType: JunctionType, val junctionID: String) extends Actor {
   import Manager._
   private val currentState = createFirstState()
+  implicit val timeout: Timeout = Timeout(5 seconds)
   var log: LoggingAdapter = Logging(context.system, this)
 
   def receive: Receive = onMessage(currentState)
@@ -46,6 +55,18 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
 
     case TrafficLightHistoryResponse(actorRef, historyData) =>
       log.info(actorRef.toString() + historyData.toString)
+
+    case ComputeNewState =>
+      var data = Vector.empty[TrafficLightState]
+      for((child, _) <- state) {
+        val tl = Await.result(child ? ComputeNewState, 5 seconds).asInstanceOf[CountCarsOnLanesResponse]
+        data = tl.state +: data
+      }
+      val newState = new Planner(data).plan
+      for ((trafficLight, newLight) <- newState) {
+        trafficLight ! UpdateActiveLight(newLight)
+      }
+      context.become(onMessage(newState))
 
     //  case _ =>
 //      throw Exception
@@ -85,7 +106,9 @@ object Main {
   def main(): Unit = {
     BasicConfigurator.configure()
     val system = ActorSystem("test")
-    val testManager1 = system.actorOf(Props(new Manager(JunctionType.X, "1")), "1")
-    val testManager2 = system.actorOf(Props(new Manager(JunctionType.X, "2")), "2")
+    val testManager = system.actorOf(Props(new Manager(JunctionType.X, "1")), "1")
+    val testManager1 = system.actorOf(Props(new Manager(JunctionType.X, "2")), "2")
+    system.scheduler.scheduleOnce(1 seconds, testManager, ComputeNewState)
+    system.scheduler.scheduleOnce(1 seconds, testManager1, ComputeNewState)
   }
 }
