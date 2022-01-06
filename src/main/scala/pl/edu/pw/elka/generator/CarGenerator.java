@@ -21,7 +21,7 @@ public class CarGenerator extends TimerTask {
 	@Override
 	public void run() {
 		List<Coordinate> borderLanes = databaseRef.listBorderLanes();
-		int chosenIdx = randomGenerator.nextInt(borderLanes.size() - 1);
+		int chosenIdx = randomGenerator.nextInt(borderLanes.size());
 		Coordinate chosen = borderLanes.get(chosenIdx);
 
 		databaseRef.setCarsNumber(chosen, databaseRef.getCarsNumber(chosen) + 1);
