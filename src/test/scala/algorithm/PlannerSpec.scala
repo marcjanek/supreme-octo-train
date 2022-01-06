@@ -29,7 +29,7 @@ class PlannerSpec extends AnyFunSpec {
 
           var crossroad: Vector[TrafficLightState] = Vector[TrafficLightState]()
           val historyData = Vector.fill(3)(Light.RED)
-          val counters = Vector[Map[Lanes, Long]](Map(Lanes.P1 -> 10, Lanes.P2 -> 5), Map(Lanes.L -> 1))
+          val counters = Vector[Map[Lanes, Long]](Map(Lanes.P1 -> 3, Lanes.P2 -> 3), Map(Lanes.L -> 4))
 
           for(i <- 0 until numberOfRoads) {
             for(j <- 0 to 1) {
