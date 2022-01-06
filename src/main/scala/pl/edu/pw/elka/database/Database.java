@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import pl.edu.pw.elka.enums.Lanes;
 import pl.edu.pw.elka.enums.Light;
+import pl.edu.pw.elka.enums.Lights;
 import pl.edu.pw.elka.enums.Roads;
 import pl.edu.pw.elka.knowledgeDatabase.Junction;
 
@@ -31,6 +32,14 @@ public final class Database {
 		return coordinateToLane.keySet();
 	}
 
+	public synchronized Light getTrafficLight(final String junction, final Roads road, final Lanes lane) {
+		return this.coordinateToLane.get(new Coordinate(junction, road.name(), lane.name())).getLight();
+	}
+
+	public synchronized Long getCarsNumber(final String junction, final Roads road, final Lanes lane) {
+		return this.coordinateToLane.get(new Coordinate(junction, road.name(), lane.name())).numberOfCars;
+	}
+
 	public synchronized Light getTrafficLight(Coordinate coordinate) {
 		return this.coordinateToLane.get(coordinate).getLight();
 	}
@@ -41,6 +50,16 @@ public final class Database {
 
 	public synchronized void setTrafficLight(Coordinate coordinate, final Light light) {
 		this.coordinateToLane.get(coordinate).light = light;
+	}
+
+	public synchronized void setTrafficLight(final String junction, final Roads road, final Lights lights, final Light light) {
+		if (lights.state.equals(Lights.L.state)) {
+			this.coordinateToLane.get(new Coordinate(junction, road.name(), Lanes.L.name())).light = light;
+		} else {
+			this.coordinateToLane.get(new Coordinate(junction, road.name(), Lanes.P1.name())).light = light;
+			this.coordinateToLane.get(new Coordinate(junction, road.name(), Lanes.P2.name())).light = light;
+		}
+
 	}
 
 	public synchronized void setCarsNumber(Coordinate coordinate, final Long carsNumber) {

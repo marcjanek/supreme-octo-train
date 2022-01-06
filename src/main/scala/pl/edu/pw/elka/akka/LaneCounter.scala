@@ -1,13 +1,8 @@
 package pl.edu.pw.elka.akka
 
-import akka.actor.{Actor, ActorSystem, Props}
-import akka.event.{Logging, LoggingAdapter}
-import org.apache.log4j.BasicConfigurator
-import pl.edu.pw.elka.akka.LaneCounter.{CountCarsOnLane, NewDetectorsData}
+import akka.actor.Actor
+import pl.edu.pw.elka.akka.TrafficLight.CarNumberResponse
 import pl.edu.pw.elka.enums.{Lanes, Roads}
-
-import scala.collection.immutable.Vector
-import scala.concurrent.duration._
 
 object LaneCounter {
   case class NewDetectorsData(newData: Int)
@@ -15,24 +10,19 @@ object LaneCounter {
   case object Stop
 }
 
-class LaneCounter(val trafficLightId: Lanes, val roadId: Roads) extends Actor {
+class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) extends Actor {
   import LaneCounter._
-  var log: LoggingAdapter = Logging(context.system, this)
 
-  private val dataFromDetectors = Vector.empty
+  def receive: Receive = onMessage()
 
-  def receive: Receive = onMessage(dataFromDetectors)
-
-  private def onMessage(detectorsData: Vector[Int]): Receive = {
-    case NewDetectorsData(data) =>
-      context.become(onMessage(data +: detectorsData))
-      log.info(detectorsData.toString())
+  private def onMessage(): Receive = {
     case CountCarsOnLane =>
-      log.info(detectorsData.toString())
-      // sender() ! detectorsData.sum
-      context.become(onMessage(Vector.empty))
+      val cars = pl.edu.pw.elka.Main.database.getCarsNumber(junctionID, roadId, lane)
+      sender() ! CarNumberResponse(cars, lane)
+
     case Stop =>
       context.stop(self)
+
     //    case _ =>
     //      throw Exception
   }
