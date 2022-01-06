@@ -56,7 +56,7 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
 
       breakable {
         for (offerMember <- selectedOffers) {
-          if (checkCollision(offerMember.state, offers(index).state)) {
+          if (checkCollision(offerMember.state, offers(i).state)) {
             collisionFound = true
 
             break
