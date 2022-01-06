@@ -1,6 +1,7 @@
 package pl.edu.pw.elka.terrain;
 
 import lombok.Data;
+import pl.edu.pw.elka.database.Coordinate;
 import pl.edu.pw.elka.enums.Light;
 
 import javax.imageio.ImageIO;
@@ -73,12 +74,12 @@ class Terrain extends JPanel {
 //       super.paintComponent(graphics);
     }
 
-    public void changeLight(final Light newState, final String junction, final String road, final String lane){
-        this.junctions.get(junction).roads.get(road).setLaneState(lane, newState);
+    public void changeLight(final Light newState, final Coordinate coordinate){
+        this.junctions.get(coordinate.getJunction()).roads.get(coordinate.getRoad()).setLaneState(coordinate.getLane(), newState);
         repaint();
     }
-    public void changeCarsNumber(final Long carsNumber, final String junction, final String road, final String lane){
-        this.junctions.get(junction).roads.get(road).setLaneState(lane, carsNumber);
+    public void changeCarsNumber(final Long carsNumber, final Coordinate coordinate){
+        this.junctions.get(coordinate.getJunction()).roads.get(coordinate.getRoad()).setLaneState(coordinate.getLane(), carsNumber);
         repaint();
     }
 

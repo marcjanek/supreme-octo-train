@@ -1,13 +1,18 @@
-package pl.edu.pw.elka.knowledgeDatabase;
+package pl.edu.pw.elka.database;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import pl.edu.pw.elka.enums.TrafficLightStates;
+import pl.edu.pw.elka.knowledgeDatabase.Junction;
 
-class XJunction extends Junction {
-	XJunction() {
+public class XJunction extends Junction {
+	public XJunction(List<Lane> lanes, String name) {
+		this.lanesInJunction.addAll(lanes);
+		this.name = name;
 		initializeAllowedStates();
 	}
+
 
 	@Override
 	protected void initializeAllowedStates() {

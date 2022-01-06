@@ -1,11 +1,14 @@
 package pl.edu.pw.elka.knowledgeDatabase;
 
+import java.util.ArrayList;
+import pl.edu.pw.elka.database.XJunction;
+import pl.edu.pw.elka.database.YJunction;
 import pl.edu.pw.elka.enums.TrafficLightStates;
 
 import java.util.HashSet;
 
 public class KnowledgeDatabase {
-    static XJunction xJunction = new XJunction();
+    static XJunction xJunction = new XJunction(new ArrayList<>(), null);
     static YJunction yJunction = new YJunction();
     public HashSet<TrafficLightStates> getAllowedStatesForXJunction(final TrafficLightStates key1){
         return xJunction.allowedStates(key1);

@@ -5,7 +5,8 @@ import lombok.Data;
 import pl.edu.pw.elka.enums.Light;
 
 @Data @AllArgsConstructor
-class Lane {
+public class Lane {
+    Coordinate coordinate;
     Light light = Light.RED;
     Long numberOfCars = 99L;
 }

@@ -1,13 +1,15 @@
-package pl.edu.pw.elka.knowledgeDatabase;
+package pl.edu.pw.elka.database;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import pl.edu.pw.elka.enums.TrafficLightStates;
+import pl.edu.pw.elka.knowledgeDatabase.Junction;
 
-class YJunction extends Junction {
+public class YJunction extends Junction {
 	public YJunction() {
 		super();
+		initializeAllowedStates();
 	}
 
 	@Override
