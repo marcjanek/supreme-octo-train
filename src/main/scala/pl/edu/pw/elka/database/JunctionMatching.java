@@ -1,7 +1,6 @@
 package pl.edu.pw.elka.database;
 
 import java.util.Objects;
-import pl.edu.pw.elka.enums.Roads;
 
 public class JunctionMatching {
 
@@ -25,7 +24,8 @@ public class JunctionMatching {
 		if (!(o instanceof JunctionMatching))
 			return false;
 		final JunctionMatching that = (JunctionMatching) o;
-		return junctionA.equals(that.junctionA) && junctionB.equals(that.junctionB) && roadA == that.roadA && roadB == that.roadB;
+		return junctionA.equals(that.junctionA) && junctionB.equals(that.junctionB) && Objects.equals(roadA, that.roadA) && Objects.equals(
+				roadB, that.roadB);
 	}
 
 	@Override

@@ -17,13 +17,17 @@ public final class Database {
 	private final ArrayList<Junction> junctions = new ArrayList<>();
 	private final List<JunctionMatching> junctionMatching = new ArrayList<>();
 
-	public Boolean isBorderRoad(Coordinate c) {
+	public synchronized Boolean isBorderRoad(Coordinate c) { //FIXME must see if lane is input or output of junction
 		String junctionName = c.getJunction();
 		String road = c.getRoad();
 		return junctionMatching.stream().noneMatch(m -> m.containsJunctionRoad(junctionName, road));
 	}
 
-	public Set<Coordinate> getLaneCoordinates() {
+	public synchronized List<Coordinate> listBorderLanes() {
+		return coordinateToLane.keySet().stream().filter(this::isBorderRoad).collect(Collectors.toList());
+	}
+
+	public synchronized Set<Coordinate> getLaneCoordinates() {
 		return coordinateToLane.keySet();
 	}
 
