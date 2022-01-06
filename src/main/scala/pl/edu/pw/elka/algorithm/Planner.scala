@@ -3,41 +3,34 @@ package pl.edu.pw.elka.algorithm
 import akka.actor.ActorRef
 import scala.util.control.Breaks._
 import pl.edu.pw.elka.akka.TrafficLightState
-import pl.edu.pw.elka.enums.Light
+import pl.edu.pw.elka.enums._
 
 class Planner(val crossroad: Vector[TrafficLightState]) {
-  def plan : Map[ActorRef, Light] = {
+  def plan: Map[ActorRef, Light] = {
     if (crossroad.isEmpty) {
       return Map[ActorRef, Light]()
     }
 
-    var scores = Array.fill[ScoreObject](crossroad.length)(null)
+    var scores = Vector.fill[ScoreObject](crossroad.length)(null)
 
     for (i <- crossroad.indices) {
       val carsOnLane = crossroad(i).counters.values.sum
 
-      scores(i) = new ScoreObject(
-        score(carsOnLane, crossroad(i).historyData),
-        crossroad(i)
+      scores = scores.updated(
+        i,
+        new ScoreObject(
+          score(carsOnLane, crossroad(i).historyData),
+          crossroad(i)
+        )
       )
     }
 
     scores = scores.sortWith(_.score > _.score)
 
-    var greenLights = Vector[ScoreObject](scores.head)
-
-    breakable {
-      for (i <- 1 until scores.length) {
-        if (!checkCollision(greenLights.head.state, scores(i).state)) {
-          greenLights = greenLights :+ scores(i)
-
-          break
-        }
-      }
-    }
+    val greenLights = searchForWinningOffer(scores, 0, Vector[ScoreObject]())
 
     val redLights = scores.diff(greenLights)
-    var resultLights : Map[ActorRef, Light] = Map()
+    var resultLights: Map[ActorRef, Light] = Map()
 
     // Save green lights
     for (light <- greenLights) {
@@ -52,11 +45,39 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
     resultLights
   }
 
+  private def searchForWinningOffer(offers: Vector[ScoreObject], index: Int, selectedOffers: Vector[ScoreObject]): Vector[ScoreObject] = {
+    if (offers.length == index) return selectedOffers
+
+    var availableOffers = Vector[Vector[ScoreObject]](selectedOffers)
+
+    for (i <- index until offers.length) {
+      var collisionFound = false
+
+      breakable {
+        for (offerMember <- selectedOffers) {
+          if (checkCollision(offerMember.state, offers(index).state)) {
+            collisionFound = true
+
+            break
+          }
+        }
+      }
+
+      if (!collisionFound) {
+        availableOffers = availableOffers :+ searchForWinningOffer(offers, i + 1, selectedOffers :+ offers(i))
+      }
+    }
+
+    availableOffers.maxBy { x => calculateOfferScore(x) }
+  }
+
+  private def calculateOfferScore(offer: Vector[ScoreObject]): Double = offer.map { x => x.score }.sum
+
   private def score(carsOnLane: Long, trafficLightsHistory: Vector[Light]): Double = {
     val trafficLightsHistoryValues = trafficLightsHistory.map(x => x.getValue)
-    var sum : Double = 0.0
+    var sum: Double = 0.0
 
-    var recentGreenLightIndex : Int = trafficLightsHistory.indexOf(Light.GREEN)
+    var recentGreenLightIndex: Int = trafficLightsHistory.indexOf(Light.GREEN)
     if (recentGreenLightIndex == -1) recentGreenLightIndex = trafficLightsHistory.length
 
 
@@ -68,7 +89,12 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
   }
 
   private def checkCollision(winner: TrafficLightState, candidate: TrafficLightState): Boolean = {
-    (winner.road.getIndex + candidate.road.getIndex == 3) || (winner.road == candidate.road)
+    (
+      !(
+        (winner.road.getIndex + candidate.road.getIndex == 3) &&
+        (winner.counters.keys.toList.contains(Lanes.L) == candidate.counters.keys.toList.contains(Lanes.L))
+       || (winner.road == candidate.road))
+      )
   }
 }
 
