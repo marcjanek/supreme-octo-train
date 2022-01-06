@@ -37,23 +37,19 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
     }
 
     val redLights = scores.diff(greenLights)
-    var changedLights : Map[ActorRef, Light] = Map()
+    var resultLights : Map[ActorRef, Light] = Map()
 
-    // Check if needs to turn on green lights on selected traffic lights
+    // Save green lights
     for (light <- greenLights) {
-      if (light.state.historyData.head == Light.RED) {
-        changedLights += (light.state.actorRef -> Light.GREEN)
-      }
+      resultLights += (light.state.actorRef -> Light.GREEN)
     }
 
-    // Check if needs to turn on red lights on rest of traffic lights
+    // Save red lights
     for (light <- redLights) {
-      if (light.state.historyData.head == Light.GREEN) {
-        changedLights += (light.state.actorRef -> Light.RED)
-      }
+      resultLights += (light.state.actorRef -> Light.RED)
     }
 
-    changedLights
+    resultLights
   }
 
   private def score(carsOnLane: Long, trafficLightsHistory: Vector[Light]): Double = {
