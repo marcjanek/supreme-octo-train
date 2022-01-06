@@ -7,18 +7,12 @@ import pl.edu.pw.elka.enums.TrafficLightStates;
 import pl.edu.pw.elka.knowledgeDatabase.Junction;
 
 public class XJunction extends Junction {
-
-	protected String name;
-
 	public XJunction(List<Lane> lanes, String name) {
 		this.lanesInJunction.addAll(lanes);
 		this.name = name;
 		initializeAllowedStates();
 	}
 
-	public String name() {
-		return this.name;
-	}
 
 	@Override
 	protected void initializeAllowedStates() {

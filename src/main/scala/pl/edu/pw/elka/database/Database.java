@@ -15,9 +15,15 @@ public final class Database {
 
 	private final HashMap<Coordinate, Lane> coordinateToLane = new HashMap<>();
 	private final ArrayList<Junction> junctions = new ArrayList<>();
-	private final HashMap<Coordinate, Coordinate> junctionMatching = new HashMap<>();
+	private final List<JunctionMatching> junctionMatching = new ArrayList<>();
 
-	public Set<Coordinate> getLaneCoordinates(){
+	public Boolean isBorderRoad(Coordinate c) {
+		String junctionName = c.getJunction();
+		String road = c.getRoad();
+		return junctionMatching.stream().noneMatch(m -> m.containsJunctionRoad(junctionName, road));
+	}
+
+	public Set<Coordinate> getLaneCoordinates() {
 		return coordinateToLane.keySet();
 	}
 
@@ -60,6 +66,10 @@ public final class Database {
 		Junction xjunction = new XJunction(lanes, junction);
 		this.junctions.add(xjunction);
 		return xjunction;
+	}
+
+	public void match(Junction a, Junction b, Roads roadFromA, Roads roadFromB) {
+		junctionMatching.add(new JunctionMatching(a.name(), b.name(), roadFromA.name(), roadFromB.name()));
 	}
 
 }

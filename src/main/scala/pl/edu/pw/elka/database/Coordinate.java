@@ -2,6 +2,9 @@ package pl.edu.pw.elka.database;
 
 import java.util.Objects;
 
+/**
+ * Represents coordinate of lane in the model (Junction name, Road in Junction name, and lane in junction name)
+ */
 public class Coordinate {
 
 	private final String road;

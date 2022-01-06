@@ -1,8 +1,11 @@
 package pl.edu.pw.elka;
 
 import java.util.Timer;
+import pl.edu.pw.elka.database.Coordinate;
 import pl.edu.pw.elka.database.Database;
 import pl.edu.pw.elka.drawer.TerrainDrawer;
+import pl.edu.pw.elka.enums.Roads;
+import pl.edu.pw.elka.knowledgeDatabase.Junction;
 import pl.edu.pw.elka.terrain.Terrain;
 import pl.edu.pw.elka.terrain.XJunction;
 
@@ -14,8 +17,9 @@ public class Main {
 	public static void main(String[] args) {
 		//        database
 		database = new Database();
-		database.createXJunction("1");
-		database.createXJunction("2");
+		Junction x1 = database.createXJunction("1");
+		Junction x2 = database.createXJunction("2");
+		database.match(x1, x2, Roads.B, Roads.D);
 
 		//        terrain config
 		terrain = new Terrain();
