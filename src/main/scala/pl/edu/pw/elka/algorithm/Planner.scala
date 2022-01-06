@@ -15,11 +15,12 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
 
     for (i <- crossroad.indices) {
       val carsOnLane = crossroad(i).counters.values.sum
+      val planningBoost = crossroad(i).counters.size
 
       scores = scores.updated(
         i,
         new ScoreObject(
-          score(carsOnLane, crossroad(i).historyData),
+          score(carsOnLane, crossroad(i).historyData, planningBoost),
           crossroad(i)
         )
       )
@@ -73,7 +74,7 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
 
   private def calculateOfferScore(offer: Vector[ScoreObject]): Double = offer.map { x => x.score }.sum
 
-  private def score(carsOnLane: Long, trafficLightsHistory: Vector[Light]): Double = {
+  private def score(carsOnLane: Long, trafficLightsHistory: Vector[Light], planningBoost: Int): Double = {
     val trafficLightsHistoryValues = trafficLightsHistory.map(x => x.getValue)
     var sum: Double = 0.0
 
@@ -85,7 +86,7 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
       sum = sum + ((trafficLightsHistory.length - i) * trafficLightsHistoryValues(i))
     }
 
-    (recentGreenLightIndex + 1) * math.sqrt(carsOnLane) / math.sqrt(sum + 1)
+    ((recentGreenLightIndex + 1) * math.sqrt(carsOnLane) / math.sqrt(sum + 1)) + planningBoost
   }
 
   private def checkCollision(winner: TrafficLightState, candidate: TrafficLightState): Boolean = {
