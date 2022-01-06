@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import pl.edu.pw.elka.enums.Lanes;
 import pl.edu.pw.elka.enums.Light;
@@ -15,6 +16,10 @@ public final class Database {
 	private final HashMap<Coordinate, Lane> coordinateToLane = new HashMap<>();
 	private final ArrayList<Junction> junctions = new ArrayList<>();
 	private final HashMap<Coordinate, Coordinate> junctionMatching = new HashMap<>();
+
+	public Set<Coordinate> getLaneCoordinates(){
+		return coordinateToLane.keySet();
+	}
 
 	public synchronized Light getTrafficLight(Coordinate coordinate) {
 		return this.coordinateToLane.get(coordinate).getLight();
