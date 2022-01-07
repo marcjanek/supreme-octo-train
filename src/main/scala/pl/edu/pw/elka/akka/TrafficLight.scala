@@ -1,8 +1,11 @@
 package pl.edu.pw.elka.akka
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.SupervisorStrategy.{Escalate, Restart}
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props}
+import akka.event.{Logging, LoggingAdapter}
 import pl.edu.pw.elka.enums.{Lanes, Light, Lights, Roads}
 import pl.edu.pw.elka.akka.Manager.{ComputeNewState, CountCarsOnLanesResponse, LightStatusResponse, TrafficLightHistoryResponse}
+
 import scala.collection.immutable.{Map, Vector}
 import scala.concurrent.Await
 import akka.pattern.ask
@@ -22,6 +25,10 @@ object TrafficLight {
   def props(junctionID: String, roads: Roads, lane: Lanes): Props = Props(new LaneCounter(junctionID, roads, lane))
 }
 
+class TrafficLightEmergencyAlertException(private val message: String = "",
+                                 private val cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights) extends Actor {
   import TrafficLight._
 
@@ -29,6 +36,13 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
   private val trafficLightHistory = Vector[Light](Light.RED)
   private val LaneCounters = createLaneCounters()
   implicit val timeout: Timeout = Timeout(5 seconds)
+  var log: LoggingAdapter = Logging(context.system, this)
+
+  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 1, withinTimeRange = 2 seconds) {
+    case _: TrafficLightEmergencyAlertException                                =>
+      log.info("dupa2")
+      Restart
+  };
 
   def receive: Receive = onMessage(trafficLightState, trafficLightHistory)
 
@@ -48,6 +62,9 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
       sender() ! TrafficLightHistoryResponse(self, historyData)
 
     case ComputeNewState =>
+      if(!Healthy()){
+        throw new TrafficLightEmergencyAlertException("error")
+      }
       var counts = Map.empty[Lanes, Long]
       for(counter <- LaneCounters){
         val count = Await.result(counter ? CountCarsOnLane, 5 seconds).asInstanceOf[CarNumberResponse]
@@ -60,12 +77,10 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
         counts
       )
       sender() ! CountCarsOnLanesResponse(state)
-
     case Stop =>
       context.stop(self)
-
-    //    case _ =>
-    //      throw Exception
+    case _ =>
+      throw new RuntimeException("")
   }
 
   private def createLaneCounters(): Vector[ActorRef]= {
@@ -81,5 +96,18 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
     }
 
     counters
+  }
+
+  /*
+  Get the healthy status of the traffic light
+   */
+  private def Healthy(): Boolean = {
+    val r = new scala.util.Random
+    if(r.nextInt(100) > 70) {
+      log.info("dupa1")
+      true;
+    } else {
+      false;
+    }
   }
 }

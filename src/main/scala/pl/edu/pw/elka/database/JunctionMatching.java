@@ -52,5 +52,4 @@ public class JunctionMatching {
 	public String getRoadB() {
 		return roadB;
 	}
-
 }

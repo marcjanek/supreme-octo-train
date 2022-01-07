@@ -32,5 +32,4 @@ public class Main {
 		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 1500);
 		pl.edu.pw.elka.akka.Main.main();
 	}
-
 }

@@ -13,7 +13,6 @@ public class XJunction extends Junction {
 		initializeAllowedStates();
 	}
 
-
 	@Override
 	protected void initializeAllowedStates() {
 		// A
@@ -37,5 +36,4 @@ public class XJunction extends Junction {
 		this.states.put(TrafficLightStates.D_P,
 				new HashSet<>(Arrays.asList(TrafficLightStates.D_L, TrafficLightStates.B_P, TrafficLightStates.A_L)));
 	}
-
 }

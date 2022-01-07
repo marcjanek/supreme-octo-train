@@ -8,11 +8,9 @@ public class Driver extends TimerTask {
 	public Driver(Database databaseRef){
 		this.databaseRef = databaseRef;
 	}
-	
 
 	@Override
 	public void run() {
 
 	}
-
 }

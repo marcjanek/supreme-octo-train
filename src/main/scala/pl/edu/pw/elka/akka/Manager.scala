@@ -1,14 +1,15 @@
 package pl.edu.pw.elka.akka
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, Props}
+import akka.actor.SupervisorStrategy._
 import akka.event.{Logging, LoggingAdapter}
-import akka.pattern.ask
+import akka.pattern.{BackoffOpts, BackoffSupervisor, ask}
 import org.apache.log4j.BasicConfigurator
 import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData, UpdateActiveLight}
 import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
 
 import scala.collection.immutable.{Map, Vector}
-import scala.concurrent.Await
+import scala.concurrent.{Await, TimeoutException}
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.language.postfixOps
 import akka.util.Timeout
@@ -35,6 +36,12 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
   var log: LoggingAdapter = Logging(context.system, this)
 
   def receive: Receive = onMessage(currentState)
+
+  override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
+    case _: RuntimeException                         => Restart
+    case _: TimeoutException                         => Restart
+    case _: Exception                                => Escalate
+  };
 
   private def onMessage(state: Map[ActorRef, Light]): Receive = {
     case GetTrafficLightHistory =>
@@ -67,9 +74,8 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
         trafficLight ! UpdateActiveLight(newLight)
       }
       context.become(onMessage(newState))
-
-    //  case _ =>
-//      throw Exception
+    case _ =>
+      throw new RuntimeException("")
   }
 
   private def createFirstState(): Map[ActorRef, Light] = {
@@ -79,6 +85,22 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
       if (junctionType.state.equals(JunctionType.X.state)) {
         for (road <- Roads.values()) {
           val child = context.actorOf(Manager.props(junctionID, road, light))
+
+//          val backoffSupervisor = BackoffSupervisor.props(
+//            BackoffOpts
+//              .onFailure(
+//                Manager.props(),
+//                childName = "myEcho",
+//                minBackoff = 3.seconds,
+//                maxBackoff = 30.seconds,
+//                randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
+//              )
+//              .withAutoReset(10.seconds) // reset if the child does not throw any errors within 10 seconds
+//              .withSupervisorStrategy(OneForOneStrategy() {
+//                case _: MyException => SupervisorStrategy.Restart
+//                case _              => SupervisorStrategy.Escalate
+//              }))
+
           firstState = firstState + (child -> Light.RED)
         }
       } else {
