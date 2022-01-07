@@ -3,9 +3,10 @@ package pl.edu.pw.elka;
 import java.util.Random;
 import java.util.Timer;
 import pl.edu.pw.elka.database.Database;
+import pl.edu.pw.elka.simulator.Driver;
 import pl.edu.pw.elka.drawer.TerrainDrawer;
 import pl.edu.pw.elka.enums.Roads;
-import pl.edu.pw.elka.generator.CarGenerator;
+import pl.edu.pw.elka.simulator.CarGenerator;
 import pl.edu.pw.elka.knowledgeDatabase.Junction;
 import pl.edu.pw.elka.terrain.Terrain;
 import pl.edu.pw.elka.terrain.XJunction;
@@ -29,7 +30,10 @@ public class Main {
 		//        config database with visualization
 		new Timer().schedule(new TerrainDrawer(database, terrain), 0, 1000); // Create Repetitively task for every 1 secs
 		//        Akka
-		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 1500);
+		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 500);
+
+		new Timer().schedule(new Driver(database, new Random()), 0, 5000);
+
 		pl.edu.pw.elka.akka.Main.main();
 	}
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import pl.edu.pw.elka.enums.Lanes;
@@ -22,6 +23,10 @@ public final class Database {
 		String junctionName = c.getJunction();
 		String road = c.getRoad();
 		return junctionMatching.stream().noneMatch(m -> m.containsJunctionRoad(junctionName, road));
+	}
+
+	public synchronized Optional<JunctionMatching> getMatchedRoad(String inJunction, String inRoad) {
+		return junctionMatching.stream().filter(jm -> jm.getJunctionA().equals(inJunction) && jm.getRoadA().equals(inRoad)).findAny();
 	}
 
 	public synchronized List<Coordinate> listBorderLanes() {
@@ -77,6 +82,10 @@ public final class Database {
 		return createLane(coordinate, Light.RED, 0L);
 	}
 
+	public synchronized Optional<Junction> getJunction(String junctionName) {
+		return junctions.stream().filter(j -> j.name().equals(junctionName)).findAny();
+	}
+
 	public Junction createXJunction(final String junction) {
 		List<Coordinate> coordinates = Arrays.asList(new Coordinate(junction, Roads.A.state, Lanes.L.state),
 				new Coordinate(junction, Roads.A.state, Lanes.P1.state), new Coordinate(junction, Roads.A.state, Lanes.P2.state),
@@ -93,6 +102,8 @@ public final class Database {
 
 	public void match(Junction a, Junction b, Roads roadFromA, Roads roadFromB) {
 		junctionMatching.add(new JunctionMatching(a.name(), b.name(), roadFromA.name(), roadFromB.name()));
+		junctionMatching.add(new JunctionMatching(b.name(), a.name(), roadFromB.name(), roadFromA.name()));
 	}
+
 }
 

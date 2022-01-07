@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.generator;
+package pl.edu.pw.elka.simulator;
 
 import java.util.List;
 import java.util.Random;
@@ -19,9 +19,9 @@ public class CarGenerator extends TimerTask {
 	}
 
 	@Override
-	public void run() {
+	public void run() {//FIXME problems with racing with Driver class
 		List<Coordinate> borderLanes = databaseRef.listBorderLanes();
-		int chosenIdx = randomGenerator.nextInt(borderLanes.size() - 1);
+		int chosenIdx = randomGenerator.nextInt(borderLanes.size());
 		Coordinate chosen = borderLanes.get(chosenIdx);
 
 		databaseRef.setCarsNumber(chosen, databaseRef.getCarsNumber(chosen) + 1);
