@@ -102,6 +102,8 @@ public final class Database {
 
 	public void match(Junction a, Junction b, Roads roadFromA, Roads roadFromB) {
 		junctionMatching.add(new JunctionMatching(a.name(), b.name(), roadFromA.name(), roadFromB.name()));
+		junctionMatching.add(new JunctionMatching(b.name(), a.name(), roadFromB.name(), roadFromA.name()));
+
 	}
 
 }

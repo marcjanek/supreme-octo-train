@@ -10,9 +10,9 @@ public enum Roads {
 
 	public static String getByIndex(int road) {
 		switch (road) {
-			case 0:
-				return Roads.A.state;
 			case 1:
+				return Roads.A.state;
+			case 0:
 				return Roads.B.state;
 			case 2:
 				return Roads.C.state;
@@ -35,6 +35,21 @@ public enum Roads {
 				return 3;
 		}
 		throw new RuntimeException("Invalid road value");
+	}
+
+	public static String getByOrderedIndex(int road) {
+		switch (road) {
+			case 0:
+				return Roads.A.state;
+			case 1:
+				return Roads.B.state;
+			case 2:
+				return Roads.C.state;
+			case 3:
+				return Roads.D.state;
+			default:
+				return "";
+		}
 	}
 
 	public static int orderedIndexOf(String road) {

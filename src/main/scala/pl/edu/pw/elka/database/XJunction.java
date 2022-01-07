@@ -22,14 +22,14 @@ public class XJunction extends Junction {
 			case "L":
 				nextRoadIdx = (actRoadIdx + 1) % 4;
 				break;
-			case "P1":
+			case "P1": //FIXME some error with driving at right - cars rides left
 				nextRoadIdx = (actRoadIdx - 1) % 4;
 				break;
 			case "P2":
 				nextRoadIdx = (actRoadIdx + 2) % 4;
 				break;
 		}
-		return Roads.getByIndex(nextRoadIdx);
+		return Roads.getByOrderedIndex(nextRoadIdx);
 	}
 
 	@Override
