@@ -30,9 +30,9 @@ public class Main {
 		//        config database with visualization
 		new Timer().schedule(new TerrainDrawer(database, terrain), 0, 1000); // Create Repetitively task for every 1 secs
 		//        Akka
-		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 5000);
+		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 500);
 
-		new Timer().schedule(new Driver(database, new Random()), 0, 9000);
+		new Timer().schedule(new Driver(database, new Random()), 0, 5000);
 
 		pl.edu.pw.elka.akka.Main.main();
 	}
