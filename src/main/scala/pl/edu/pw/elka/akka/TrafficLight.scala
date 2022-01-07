@@ -70,9 +70,14 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
         catch {
           case e:Throwable =>
             log.error("Error occurred during getting data from lane counter")
-            self ! ErrorAlert
+            throw e
         }
       }
+
+      if(counts.isEmpty) {
+        self ! ErrorAlert
+      }
+
       val state =  new TrafficLightState(
         self,
         roadId,
