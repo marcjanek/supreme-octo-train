@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import pl.edu.pw.elka.enums.Lanes;
@@ -22,6 +23,10 @@ public final class Database {
 		String junctionName = c.getJunction();
 		String road = c.getRoad();
 		return junctionMatching.stream().noneMatch(m -> m.containsJunctionRoad(junctionName, road));
+	}
+
+	public synchronized Optional<JunctionMatching> getMatchedRoad(String inJunction, String inRoad){
+		return junctionMatching.stream().filter(jm -> jm.getJunctionA().equals(inJunction) && jm.getRoadA().equals(inRoad)).findAny();
 	}
 
 	public synchronized List<Coordinate> listBorderLanes() {
@@ -75,6 +80,10 @@ public final class Database {
 	//    create with default values: RED and 0 cars
 	public synchronized Lane createLane(Coordinate coordinate) {
 		return createLane(coordinate, Light.RED, 0L);
+	}
+
+	public synchronized Optional<Junction> getJunction(String junctionName){
+		return junctions.stream().filter(j -> j.name().equals(junctionName)).findAny();
 	}
 
 	public Junction createXJunction(final String junction) {

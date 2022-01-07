@@ -7,9 +7,15 @@ import pl.edu.pw.elka.enums.TrafficLightStates;
 import pl.edu.pw.elka.knowledgeDatabase.Junction;
 
 public class YJunction extends Junction {
+
 	public YJunction() {
 		super();
 		initializeAllowedStates();
+	}
+
+	@Override
+	public String getNextRoad(Coordinate now) {
+		throw new RuntimeException("TODO");
 	}
 
 	@Override
@@ -25,4 +31,5 @@ public class YJunction extends Junction {
 		this.states.put(TrafficLightStates.C_P,
 				new HashSet<>(Arrays.asList(TrafficLightStates.C_L, TrafficLightStates.B_P, TrafficLightStates.B_L)));
 	}
+
 }

@@ -19,7 +19,7 @@ public class CarGenerator extends TimerTask {
 	}
 
 	@Override
-	public void run() {
+	public void run() {//FIXME problems with racing with Driver class
 		List<Coordinate> borderLanes = databaseRef.listBorderLanes();
 		int chosenIdx = randomGenerator.nextInt(borderLanes.size());
 		Coordinate chosen = borderLanes.get(chosenIdx);
