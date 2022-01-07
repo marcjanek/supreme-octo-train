@@ -25,7 +25,7 @@ public final class Database {
 		return junctionMatching.stream().noneMatch(m -> m.containsJunctionRoad(junctionName, road));
 	}
 
-	public synchronized Optional<JunctionMatching> getMatchedRoad(String inJunction, String inRoad){
+	public synchronized Optional<JunctionMatching> getMatchedRoad(String inJunction, String inRoad) {
 		return junctionMatching.stream().filter(jm -> jm.getJunctionA().equals(inJunction) && jm.getRoadA().equals(inRoad)).findAny();
 	}
 
@@ -82,7 +82,7 @@ public final class Database {
 		return createLane(coordinate, Light.RED, 0L);
 	}
 
-	public synchronized Optional<Junction> getJunction(String junctionName){
+	public synchronized Optional<Junction> getJunction(String junctionName) {
 		return junctions.stream().filter(j -> j.name().equals(junctionName)).findAny();
 	}
 
@@ -103,7 +103,7 @@ public final class Database {
 	public void match(Junction a, Junction b, Roads roadFromA, Roads roadFromB) {
 		junctionMatching.add(new JunctionMatching(a.name(), b.name(), roadFromA.name(), roadFromB.name()));
 		junctionMatching.add(new JunctionMatching(b.name(), a.name(), roadFromB.name(), roadFromA.name()));
-
 	}
+
 }
 
