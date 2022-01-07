@@ -1,14 +1,14 @@
 package pl.edu.pw.elka.akka
 
 import akka.actor.{Actor, OneForOneStrategy}
-import akka.actor.SupervisorStrategy.{Escalate, Restart, Resume}
+import akka.actor.SupervisorStrategy.{Escalate}
 import pl.edu.pw.elka.akka.TrafficLight.{CarNumberResponse, CountCarsOnLane}
 import pl.edu.pw.elka.enums.{Lanes, Roads}
-import scala.concurrent.duration.DurationInt
 
 object LaneCounter {
   case class NewDetectorsData(newData: Int)
   case object Stop
+  case object ErrorAlert
 }
 
 class LaneCounterEmergencyAlertException(private val message: String = "",
@@ -18,7 +18,7 @@ class LaneCounterEmergencyAlertException(private val message: String = "",
 class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) extends Actor {
   import LaneCounter._
 
-  override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 1, withinTimeRange = 2 seconds) {
+  override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
     case _: Exception                                => Escalate
   };
 
@@ -26,16 +26,18 @@ class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) ex
 
   private def onMessage(): Receive = {
     case CountCarsOnLane =>
-     /* if(!Healthy()) {
-        throw new LaneCounterEmergencyAlertException("error")
-      }*/
+      if(!Healthy()) {
+        self ! ErrorAlert
+      }
       val cars = pl.edu.pw.elka.Main.database.getCarsNumber(junctionID, roadId, lane)
       sender() ! CarNumberResponse(cars, lane)
 
     case Stop =>
       context.stop(self)
+    case ErrorAlert =>
+      throw new LaneCounterEmergencyAlertException("error")
     case _ =>
-      throw new RuntimeException("")
+      throw new RuntimeException("lane counter system error occurred")
   }
 
   /*
@@ -43,7 +45,7 @@ class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) ex
    */
   private def Healthy(): Boolean = {
     val r = new scala.util.Random
-    if(r.nextInt(100) > 70) {
+    if(r.nextInt(100) < 97) {
       true;
     } else {
       false;

@@ -3,7 +3,7 @@ package pl.edu.pw.elka.akka
 import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy._
 import akka.event.{Logging, LoggingAdapter}
-import akka.pattern.{BackoffOpts, BackoffSupervisor, ask}
+import akka.pattern.ask
 import org.apache.log4j.BasicConfigurator
 import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData, UpdateActiveLight}
 import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
@@ -37,9 +37,18 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
 
   def receive: Receive = onMessage(currentState)
 
-  override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
+  override val supervisorStrategy = OneForOneStrategy(
+                                          maxNrOfRetries = 3,
+                                          withinTimeRange = 5 seconds,
+                                          loggingEnabled = false) {
+    case _: LaneCounterEmergencyAlertException       =>
+      log.warning("Handled  lane counter sensor error...")
+      Restart
+    case _: TrafficLightEmergencyAlertException      =>
+      log.warning("Handled traffic light error... ")
+      Restart
     case _: RuntimeException                         => Restart
-    case _: TimeoutException                         => Restart
+    case _: TimeoutException                         => Stop
     case _: Exception                                => Escalate
   };
 
@@ -75,7 +84,7 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
       }
       context.become(onMessage(newState))
     case _ =>
-      throw new RuntimeException("")
+      throw new RuntimeException("manager system error occurred")
   }
 
   private def createFirstState(): Map[ActorRef, Light] = {
@@ -84,23 +93,8 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
     for (light <- Lights.values()) {
       if (junctionType.state.equals(JunctionType.X.state)) {
         for (road <- Roads.values()) {
-          val child = context.actorOf(Manager.props(junctionID, road, light))
-
-//          val backoffSupervisor = BackoffSupervisor.props(
-//            BackoffOpts
-//              .onFailure(
-//                Manager.props(),
-//                childName = "myEcho",
-//                minBackoff = 3.seconds,
-//                maxBackoff = 30.seconds,
-//                randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
-//              )
-//              .withAutoReset(10.seconds) // reset if the child does not throw any errors within 10 seconds
-//              .withSupervisorStrategy(OneForOneStrategy() {
-//                case _: MyException => SupervisorStrategy.Restart
-//                case _              => SupervisorStrategy.Escalate
-//              }))
-
+          val childProps = Manager.props(junctionID, road, light)
+          val child = context.actorOf(childProps)
           firstState = firstState + (child -> Light.RED)
         }
       } else {
