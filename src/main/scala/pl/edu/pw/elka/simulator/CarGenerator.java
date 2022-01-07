@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.generator;
+package pl.edu.pw.elka.simulator;
 
 import java.util.List;
 import java.util.Random;

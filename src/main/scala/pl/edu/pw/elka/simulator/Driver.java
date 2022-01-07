@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.database;
+package pl.edu.pw.elka.simulator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +13,9 @@ import java.util.TimerTask;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import pl.edu.pw.elka.database.Coordinate;
+import pl.edu.pw.elka.database.Database;
+import pl.edu.pw.elka.database.JunctionMatching;
 import pl.edu.pw.elka.enums.Lanes;
 import pl.edu.pw.elka.enums.Light;
 import pl.edu.pw.elka.knowledgeDatabase.Junction;
