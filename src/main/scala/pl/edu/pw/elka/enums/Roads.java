@@ -8,18 +8,18 @@ public enum Roads {
 		this.state = s;
 	}
 
-	public static String getByIndex(int road) {
+	public static Roads getByIndex(int road) {
 		switch (road) {
 			case 1:
-				return Roads.A.state;
+				return Roads.A;
 			case 0:
-				return Roads.B.state;
+				return Roads.B;
 			case 2:
-				return Roads.C.state;
+				return Roads.C;
 			case 3:
-				return Roads.D.state;
+				return Roads.D;
 			default:
-				return "";
+				return null;
 		}
 	}
 
