@@ -33,7 +33,6 @@ public class Driver extends TimerTask {
 	@Override
 	public void run() {
 		//FIXME some loosing cars - make unit test to detect this
-		System.out.printf("Run driver %s%n", new Date());
 		Map<Coordinate, Long> greenLightLanesToCarNumbers = databaseRef.getLaneCoordinates()
 				.stream()
 				.filter(c -> databaseRef.getTrafficLight(c) == Light.GREEN)
