@@ -4,24 +4,23 @@ import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props}
 import akka.event.{Logging, LoggingAdapter}
 import pl.edu.pw.elka.enums.{Lanes, Light, Lights, Roads}
-import pl.edu.pw.elka.akka.Manager.{ComputeNewState, CountCarsOnLanesResponse, LightStatusResponse, TrafficLightHistoryResponse}
+import pl.edu.pw.elka.akka.Manager.TrafficLightDataResponse
 
 import scala.collection.immutable.{Map, Vector}
 import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
+import pl.edu.pw.elka.akka.LaneCounter.CountCarsOnLane
 
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
 object TrafficLight {
+  case object GetTrafficLightData
   case class UpdateActiveLight(newLight: Light)
-  case object CurrentLight
+  case class CarNumberResponse(cars: Long, lane: Lanes)
   case object Stop
   case object ErrorAlert
-  case object HistoryData
-  case object CountCarsOnLane
-  case class CarNumberResponse(cars: Long, lane: Lanes)
 
   def props(junctionID: String, roads: Roads, lane: Lanes): Props = Props(new LaneCounter(junctionID, roads, lane))
 }
@@ -33,34 +32,27 @@ class TrafficLightEmergencyAlertException(private val message: String = "",
 class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights) extends Actor {
   import TrafficLight._
 
-  private val trafficLightState = Light.RED
   private val trafficLightHistory = Vector[Light](Light.RED)
   private val LaneCounters = createLaneCounters()
   implicit val timeout: Timeout = Timeout(5 seconds)
   var log: LoggingAdapter = Logging(context.system, this)
 
-  override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
+  override val supervisorStrategy: OneForOneStrategy = OneForOneStrategy(loggingEnabled = false) {
     case _: Exception                                => Escalate
-  };
+  }
 
-  def receive: Receive = onMessage(trafficLightState, trafficLightHistory)
+  def receive: Receive = onMessage(trafficLightHistory)
 
-  private def onMessage(activeLight: Light, historyData: Vector[Light]): Receive = {
+  private def onMessage(historyData: Vector[Light]): Receive = {
     case UpdateActiveLight(newLight) =>
       if(historyData.size == 10){
-        context.become(onMessage(newLight, newLight +: historyData.dropRight(0)))
+        context.become(onMessage(newLight +: historyData.dropRight(0)))
       } else {
-        context.become(onMessage(newLight, newLight +: historyData))
+        context.become(onMessage(newLight +: historyData))
       }
       pl.edu.pw.elka.Main.database.setTrafficLight(junctionID, roadId, lights, newLight)
 
-    case CurrentLight =>
-      sender() ! LightStatusResponse(self, activeLight)
-
-    case HistoryData =>
-      sender() ! TrafficLightHistoryResponse(self, historyData)
-
-    case ComputeNewState =>
+    case GetTrafficLightData =>
       var counts = Map.empty[Lanes, Long]
       for(counter <- LaneCounters){
         try {
@@ -84,11 +76,14 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
         historyData,
         counts
       )
-      sender() ! CountCarsOnLanesResponse(state)
+      sender() ! TrafficLightDataResponse(state)
+
     case Stop =>
       context.stop(self)
+
     case ErrorAlert =>
       throw new TrafficLightEmergencyAlertException("error")
+
     case _ =>
       throw new RuntimeException("traffic light system error occurred")
   }
@@ -106,17 +101,5 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
     }
 
     counters
-  }
-
-  /*
-  Get the healthy status of the traffic light
-   */
-  private def Healthy(): Boolean = {
-    val r = new scala.util.Random()
-    if( r.nextInt(100) < 98) {
-      true;
-    } else {
-      false;
-    }
   }
 }
