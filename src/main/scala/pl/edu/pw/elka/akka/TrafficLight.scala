@@ -1,12 +1,13 @@
 package pl.edu.pw.elka.akka
 
-import akka.actor.SupervisorStrategy.{Escalate}
+import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props}
+import akka.event.{Logging, LoggingAdapter}
 import pl.edu.pw.elka.enums.{Lanes, Light, Lights, Roads}
 import pl.edu.pw.elka.akka.Manager.{ComputeNewState, CountCarsOnLanesResponse, LightStatusResponse, TrafficLightHistoryResponse}
 
 import scala.collection.immutable.{Map, Vector}
-import scala.concurrent.{Await}
+import scala.concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 
@@ -36,6 +37,7 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
   private val trafficLightHistory = Vector[Light](Light.RED)
   private val LaneCounters = createLaneCounters()
   implicit val timeout: Timeout = Timeout(5 seconds)
+  var log: LoggingAdapter = Logging(context.system, this)
 
   override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
     case _: Exception                                => Escalate
@@ -59,13 +61,17 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
       sender() ! TrafficLightHistoryResponse(self, historyData)
 
     case ComputeNewState =>
-      if(!Healthy()){
-        self ! ErrorAlert
-      }
       var counts = Map.empty[Lanes, Long]
       for(counter <- LaneCounters){
-        val count = Await.result(counter ? CountCarsOnLane, 5 seconds).asInstanceOf[CarNumberResponse]
-        counts = counts + (count.lane -> count.cars)
+        try {
+          val count = Await.result(counter ? CountCarsOnLane, 5 seconds).asInstanceOf[CarNumberResponse]
+          counts = counts + (count.lane -> count.cars)
+        }
+        catch {
+          case e:Throwable =>
+            log.error("Error occurred during getting data from lane counter")
+            self ! ErrorAlert
+        }
       }
       val state =  new TrafficLightState(
         self,

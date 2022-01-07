@@ -1,7 +1,8 @@
 package pl.edu.pw.elka.akka
 
 import akka.actor.{Actor, OneForOneStrategy}
-import akka.actor.SupervisorStrategy.{Escalate}
+import akka.actor.SupervisorStrategy.Escalate
+import akka.event.{Logging, LoggingAdapter}
 import pl.edu.pw.elka.akka.TrafficLight.{CarNumberResponse, CountCarsOnLane}
 import pl.edu.pw.elka.enums.{Lanes, Roads}
 
@@ -18,6 +19,8 @@ class LaneCounterEmergencyAlertException(private val message: String = "",
 class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) extends Actor {
   import LaneCounter._
 
+  var log: LoggingAdapter = Logging(context.system, this)
+
   override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
     case _: Exception                                => Escalate
   };
@@ -26,10 +29,17 @@ class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) ex
 
   private def onMessage(): Receive = {
     case CountCarsOnLane =>
-      if(!Healthy()) {
-        self ! ErrorAlert
+      var cars: Long = 0
+      try {
+        cars = pl.edu.pw.elka.Main.database.getCarsNumber(junctionID, roadId, lane)
+        Validate(cars)
       }
-      val cars = pl.edu.pw.elka.Main.database.getCarsNumber(junctionID, roadId, lane)
+      catch {
+        case e:Throwable =>
+          log.error("Error occurred during getting data from database")
+          self ! ErrorAlert
+      }
+
       sender() ! CarNumberResponse(cars, lane)
 
     case Stop =>
@@ -43,12 +53,9 @@ class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) ex
   /*
   Get the healthy status of the lane counter sensors
    */
-  private def Healthy(): Boolean = {
-    val r = new scala.util.Random
-    if(r.nextInt(100) < 97) {
-      true;
-    } else {
-      false;
+  private def Validate(cars: Long): Unit = {
+    if(cars < 0) {
+      self ! ErrorAlert
     }
   }
 }
