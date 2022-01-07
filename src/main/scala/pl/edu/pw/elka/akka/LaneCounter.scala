@@ -3,11 +3,11 @@ package pl.edu.pw.elka.akka
 import akka.actor.{Actor, OneForOneStrategy}
 import akka.actor.SupervisorStrategy.Escalate
 import akka.event.{Logging, LoggingAdapter}
-import pl.edu.pw.elka.akka.TrafficLight.{CarNumberResponse, CountCarsOnLane}
+import pl.edu.pw.elka.akka.TrafficLight.CarNumberResponse
 import pl.edu.pw.elka.enums.{Lanes, Roads}
 
 object LaneCounter {
-  case class NewDetectorsData(newData: Int)
+  case object CountCarsOnLane
   case object Stop
   case object ErrorAlert
 }
@@ -21,9 +21,9 @@ class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) ex
 
   var log: LoggingAdapter = Logging(context.system, this)
 
-  override val supervisorStrategy = OneForOneStrategy(loggingEnabled = false) {
+  override val supervisorStrategy: OneForOneStrategy = OneForOneStrategy(loggingEnabled = false) {
     case _: Exception                                => Escalate
-  };
+  }
 
   def receive: Receive = onMessage()
 
@@ -44,8 +44,10 @@ class LaneCounter(val junctionID: String, val roadId: Roads, val lane: Lanes) ex
 
     case Stop =>
       context.stop(self)
+
     case ErrorAlert =>
       throw new LaneCounterEmergencyAlertException("error")
+
     case _ =>
       throw new RuntimeException("lane counter system error occurred")
   }

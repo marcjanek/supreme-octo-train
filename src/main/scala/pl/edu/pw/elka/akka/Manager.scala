@@ -5,7 +5,7 @@ import akka.actor.SupervisorStrategy._
 import akka.event.{Logging, LoggingAdapter}
 import akka.pattern.{AskTimeoutException, ask}
 import org.apache.log4j.BasicConfigurator
-import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData, UpdateActiveLight}
+import pl.edu.pw.elka.akka.TrafficLight.{GetTrafficLightData, UpdateActiveLight}
 import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
 
 import scala.collection.immutable.{Map, Vector}
@@ -17,14 +17,8 @@ import pl.edu.pw.elka.akka.Manager.ComputeNewState
 import pl.edu.pw.elka.algorithm.Planner
 
 object Manager {
-  case class GetTrafficLightHistory()
-  case class AskForLightStatus()
-  case class LightStatusResponse(actorRef: ActorRef, light: Light)
-  case class TrafficLightHistoryResponse(actorRef: ActorRef, History: Vector[Light])
-  case class NewLightState(state: Map[ActorRef, Light])
   case object ComputeNewState
-  case class CountCarsOnLanesResponse(state: TrafficLightState)
-  case object StartManager
+  case class TrafficLightDataResponse(state: TrafficLightState)
   case object ErrorAlert
 
   def props(junctionID: String, roads: Roads, lights: Lights): Props = Props(new TrafficLight(junctionID, roads, lights))
@@ -32,6 +26,7 @@ object Manager {
 
 class Manager(val junctionType: JunctionType, val junctionID: String) extends Actor {
   import Manager._
+
   private val currentState = createFirstState()
   implicit val timeout: Timeout = Timeout(5 seconds)
   var log: LoggingAdapter = Logging(context.system, this)
@@ -40,9 +35,7 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
                                             private val cause: Throwable = None.orNull)
     extends Exception(message, cause)
 
-  def receive: Receive = onMessage(currentState)
-
-  override val supervisorStrategy = OneForOneStrategy(
+  override val supervisorStrategy: OneForOneStrategy = OneForOneStrategy(
                                           maxNrOfRetries = 3,
                                           withinTimeRange = 5 seconds,
                                           loggingEnabled = false) {
@@ -59,33 +52,16 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
     case _: TimeoutException                         => Restart
     case _: AskTimeoutException                      => Restart
     case _: Exception                                => Escalate
-  };
+  }
+
+  def receive: Receive = onMessage(currentState)
 
   private def onMessage(state: Map[ActorRef, Light]): Receive = {
-    case GetTrafficLightHistory =>
-      for((child, _) <- state) {
-        child ! HistoryData
-      }
-
-    case AskForLightStatus =>
-      for((child, _) <- state) {
-        child ! CurrentLight
-      }
-
-    case LightStatusResponse(actorRef, light) =>
-      if (state(actorRef) != light) {
-        context.become(onMessage(state = state + (actorRef -> light)))
-      }
-      log.info(state.toString())
-
-    case TrafficLightHistoryResponse(actorRef, historyData) =>
-      log.info(actorRef.toString() + historyData.toString)
-
     case ComputeNewState =>
       var data = Vector.empty[TrafficLightState]
       for((child, _) <- state) {
         try {
-          val tl = Await.result(child ? ComputeNewState, 5 seconds).asInstanceOf[CountCarsOnLanesResponse]
+          val tl = Await.result(child ? GetTrafficLightData, 5 seconds).asInstanceOf[TrafficLightDataResponse]
           data = tl.state +: data
         }
         catch {
@@ -99,8 +75,10 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
         trafficLight ! UpdateActiveLight(newLight)
       }
       context.become(onMessage(newState))
+
     case ErrorAlert =>
       throw new ManagerSystemErrorAlertException("error")
+
     case _ =>
       throw new RuntimeException("manager system error occurred")
   }
