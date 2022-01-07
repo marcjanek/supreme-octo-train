@@ -36,5 +36,4 @@ public class Main {
 
 		pl.edu.pw.elka.akka.Main.main();
 	}
-
 }

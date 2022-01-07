@@ -105,6 +105,5 @@ public final class Database {
 		junctionMatching.add(new JunctionMatching(b.name(), a.name(), roadFromB.name(), roadFromA.name()));
 
 	}
-
 }
 

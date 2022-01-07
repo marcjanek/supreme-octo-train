@@ -27,5 +27,4 @@ public abstract class Junction {
 	public HashSet<TrafficLightStates> allowedStates(final TrafficLightStates key1) {
 		return states.get(key1);
 	}
-
 }

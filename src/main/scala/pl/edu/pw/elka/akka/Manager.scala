@@ -1,14 +1,15 @@
 package pl.edu.pw.elka.akka
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, OneForOneStrategy, Props}
+import akka.actor.SupervisorStrategy._
 import akka.event.{Logging, LoggingAdapter}
-import akka.pattern.ask
+import akka.pattern.{AskTimeoutException, ask}
 import org.apache.log4j.BasicConfigurator
 import pl.edu.pw.elka.akka.TrafficLight.{CurrentLight, HistoryData, UpdateActiveLight}
 import pl.edu.pw.elka.enums.{JunctionType, Lanes, Light, Lights, Roads}
 
 import scala.collection.immutable.{Map, Vector}
-import scala.concurrent.Await
+import scala.concurrent.{Await, TimeoutException}
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.language.postfixOps
 import akka.util.Timeout
@@ -24,6 +25,7 @@ object Manager {
   case object ComputeNewState
   case class CountCarsOnLanesResponse(state: TrafficLightState)
   case object StartManager
+  case object ErrorAlert
 
   def props(junctionID: String, roads: Roads, lights: Lights): Props = Props(new TrafficLight(junctionID, roads, lights))
 }
@@ -34,7 +36,30 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
   implicit val timeout: Timeout = Timeout(5 seconds)
   var log: LoggingAdapter = Logging(context.system, this)
 
+  class ManagerSystemErrorAlertException(private val message: String = "",
+                                            private val cause: Throwable = None.orNull)
+    extends Exception(message, cause)
+
   def receive: Receive = onMessage(currentState)
+
+  override val supervisorStrategy = OneForOneStrategy(
+                                          maxNrOfRetries = 3,
+                                          withinTimeRange = 5 seconds,
+                                          loggingEnabled = false) {
+    case _: LaneCounterEmergencyAlertException       =>
+      log.info("Handled lane counter sensor error...")
+      Restart
+    case _: TrafficLightEmergencyAlertException      =>
+      log.info("Handled traffic light error... ")
+      Restart
+    case _: ManagerSystemErrorAlertException       =>
+      log.info("Handled manager system error...")
+      Restart
+    case _: RuntimeException                         => Restart
+    case _: TimeoutException                         => Restart
+    case _: AskTimeoutException                      => Restart
+    case _: Exception                                => Escalate
+  };
 
   private def onMessage(state: Map[ActorRef, Light]): Receive = {
     case GetTrafficLightHistory =>
@@ -59,17 +84,25 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
     case ComputeNewState =>
       var data = Vector.empty[TrafficLightState]
       for((child, _) <- state) {
-        val tl = Await.result(child ? ComputeNewState, 5 seconds).asInstanceOf[CountCarsOnLanesResponse]
-        data = tl.state +: data
+        try {
+          val tl = Await.result(child ? ComputeNewState, 5 seconds).asInstanceOf[CountCarsOnLanesResponse]
+          data = tl.state +: data
+        }
+        catch {
+          case e:Throwable =>
+            log.error("Error occurred during calculating new state")
+            self ! ErrorAlert
+        }
       }
       val newState = new Planner(data).plan
       for ((trafficLight, newLight) <- newState) {
         trafficLight ! UpdateActiveLight(newLight)
       }
       context.become(onMessage(newState))
-
-    //  case _ =>
-//      throw Exception
+    case ErrorAlert =>
+      throw new ManagerSystemErrorAlertException("error")
+    case _ =>
+      throw new RuntimeException("manager system error occurred")
   }
 
   private def createFirstState(): Map[ActorRef, Light] = {
@@ -78,7 +111,8 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
     for (light <- Lights.values()) {
       if (junctionType.state.equals(JunctionType.X.state)) {
         for (road <- Roads.values()) {
-          val child = context.actorOf(Manager.props(junctionID, road, light))
+          val childProps = Manager.props(junctionID, road, light)
+          val child = context.actorOf(childProps)
           firstState = firstState + (child -> Light.RED)
         }
       } else {
