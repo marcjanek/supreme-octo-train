@@ -2,6 +2,7 @@ package simulator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,7 +18,7 @@ import pl.edu.pw.elka.simulator.Driver;
 
 public class DriverTestsTwoXJunction {
 
-	private final DeterministicGeneratorMock randomGenerator = new DeterministicGeneratorMock(0);
+	private final DeterministicGeneratorMock randomGenerator = new DeterministicGeneratorMock(0, new ArrayList<>());
 	private Database database = null;
 
 	private final Coordinate threeCarsOnRightLane = new Coordinate("1", Roads.D.name(), Lanes.P1.name());
@@ -59,7 +60,7 @@ public class DriverTestsTwoXJunction {
 	@Test
 	public void shouldMoveAllCarsToNextLanesIfAllLightsAreGreen() {
 		Driver driver = new Driver(database, randomGenerator);
-		randomGenerator.nextIntVal = 0; //should all cars be on left lane after riding by a junction
+		randomGenerator.defaultIntVal = 0; //should all cars be on left lane after riding by a junction
 		Coordinate fiveCarsFromLeftAndStraight = new Coordinate("2", Roads.D.name(), Lanes.L.name());
 
 		database.getLaneCoordinates().forEach(c -> database.setTrafficLight(c, Light.GREEN));
@@ -77,7 +78,7 @@ public class DriverTestsTwoXJunction {
 	@Test
 	public void shouldMoveStraightAndRightCarsToNextLanesIfOnlyStraightAndRightLightsAreGreen() {
 		Driver driver = new Driver(database, randomGenerator);
-		randomGenerator.nextIntVal = 2; //should all cars be on straight lane after riding by a junction
+		randomGenerator.defaultIntVal = 2; //should all cars be on straight lane after riding by a junction
 		Coordinate twoFromStraight = new Coordinate("2", Roads.D.name(), Lanes.P2.name());
 		final Set<Coordinate> nonZeroCarNumbers = Stream.of(twoFromStraight, threeCarsOnLeftLane, threeCarsOnRightLane)
 				.collect(Collectors.toSet());
