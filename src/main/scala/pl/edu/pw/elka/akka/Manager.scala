@@ -24,16 +24,16 @@ object Manager {
   def props(junctionID: String, roads: Roads, lights: Lights): Props = Props(new TrafficLight(junctionID, roads, lights))
 }
 
+class ManagerSystemErrorAlertException(private val message: String = "",
+                                       private val cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 class Manager(val junctionType: JunctionType, val junctionID: String) extends Actor {
   import Manager._
 
   private val currentState = createFirstState()
   implicit val timeout: Timeout = Timeout(5 seconds)
   var log: LoggingAdapter = Logging(context.system, this)
-
-  class ManagerSystemErrorAlertException(private val message: String = "",
-                                            private val cause: Throwable = None.orNull)
-    extends Exception(message, cause)
 
   override val supervisorStrategy: OneForOneStrategy = OneForOneStrategy(
                                           maxNrOfRetries = 3,
@@ -50,7 +50,6 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
       Restart
     case _: RuntimeException                         => Restart
     case _: TimeoutException                         => Restart
-    case _: AskTimeoutException                      => Restart
     case _: Exception                                => Escalate
   }
 
@@ -83,7 +82,7 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
       throw new RuntimeException("manager system error occurred")
   }
 
-  private def createFirstState(): Map[ActorRef, Light] = {
+  def createFirstState(): Map[ActorRef, Light] = {
     var firstState = Map.empty[ActorRef, Light]
 
     for (light <- Lights.values()) {

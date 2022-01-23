@@ -56,7 +56,7 @@ class TrafficLightTests extends TestKit(ActorSystem("TestKitUsageSpec"))
       success
     }
 
-    "GetTrafficLightData return valid TrafficLightState" in {
+    "GetTrafficLightData return valid TrafficLightDataResponse" in {
       val probe = TestProbe()
       val responseCarsOnLane = CarNumberResponse(10, Lanes.L)
       val trafficLightRef = TestActorRef(new TrafficLight("junctionId", Roads.A, Lights.L) {

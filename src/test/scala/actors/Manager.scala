@@ -1,76 +1,102 @@
 package actors
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import org.scalatest.funspec._
-import pl.edu.pw.elka.akka.TrafficLightState
-import pl.edu.pw.elka.algorithm.Planner
+import akka.testkit.{DefaultTimeout, ImplicitSender, TestActor, TestActorRef, TestKit, TestProbe}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.specs2.execute.StandardResults.success
+import pl.edu.pw.elka.akka.{Manager, ManagerSystemErrorAlertException, TrafficLightEmergencyAlertException, TrafficLightState}
+import pl.edu.pw.elka.akka.Manager.{ComputeNewState, TrafficLightDataResponse, ErrorAlert => ManagerError}
+import pl.edu.pw.elka.akka.TrafficLight.{GetTrafficLightData, UpdateActiveLight, ErrorAlert => TrafficError}
 import pl.edu.pw.elka.enums._
 
-class Manager extends AnyFunSpec {
-  implicit val system: ActorSystem = ActorSystem()
+import scala.collection.immutable.{Map, Vector}
+import scala.concurrent.duration.DurationInt
 
-  describe("#plan") {
-    describe("when given vector is empty") {
-      it("returns empty crossroad vector") {
-        val crossroad: Vector[TrafficLightState] = Vector[TrafficLightState]()
-        val planner = new Planner(crossroad)
+class ManagerTests extends TestKit(ActorSystem("TestKitUsageSpec"))
+  with DefaultTimeout
+  with ImplicitSender
+  with AnyWordSpecLike
+  with Matchers
+  with BeforeAndAfterAll {
 
-        val expected = Map[ActorRef, Light]()
-        assert(planner.plan === expected)
+  override def afterAll(): Unit = {
+    shutdown()
+  }
+
+  "Manager" should {
+    "Error alert throw ManagerSystemErrorAlertException" in {
+      val managerRef = TestActorRef(Props(new Manager(JunctionType.X, "junctionId")))
+      intercept[ManagerSystemErrorAlertException] {
+        managerRef.receive(ManagerError)
       }
     }
 
-    describe("when given vector describes 3-roads crossroad") {
-      describe("when there are less than 10 traffic lights states in the history") {
-        it("returns valid traffic lights configuration") {
-          val numberOfRoads = 3
-          val actors : Vector[ActorRef] = Vector.fill(2 * numberOfRoads)(system.actorOf(Props.empty))
-
-          var crossroad: Vector[TrafficLightState] = Vector[TrafficLightState]()
-          val historyData = Vector.fill(3)(Light.RED)
-          val counters = Vector[Map[Lanes, Long]](Map(Lanes.P1 -> 3, Lanes.P2 -> 3), Map(Lanes.L -> 4))
-
-          for(i <- 0 until numberOfRoads) {
-            for(j <- 0 to 1) {
-              val trafficLightState = new TrafficLightState(
-                actors(2 * i + j),
-                Roads.getByIndex(i),
-                historyData,
-                counters(j)
-              )
-
-              crossroad = trafficLightState +: crossroad
-            }
-          }
-
-          val planner = new Planner(crossroad)
-          val generatedPlan = planner.plan
-
-          assert(generatedPlan.size === 6)
+    "ComputeNewState call GetTrafficLightData with max timeout 5 sec" in {
+      val probe = TestProbe()
+      val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
+        override def createFirstState(): Map[ActorRef, Light] = {
+          val firstState = Map[ActorRef, Light] ((probe.ref, Light.RED))
+          firstState
         }
-      }
+      })
+      managerRef ! ComputeNewState
+      probe.expectMsg(5 seconds, GetTrafficLightData)
+      success
+    }
 
-      describe("when green light didn't use to be turned on") {
+    "ComputeNewState error during computing" in {
+      val probe = TestProbe()
+      val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
+        override def createFirstState(): Map[ActorRef, Light] = {
+          val firstState = Map[ActorRef, Light] ((probe.ref, Light.RED))
+          firstState
+        }
+      })
 
-      }
+      probe.setAutoPilot(new TestActor.AutoPilot {
+        def run(sender: ActorRef, msg: Any): TestActor.AutoPilot =
+          msg match {
+            case GetTrafficLightData => throw new TrafficLightEmergencyAlertException()
+            case _ => TestActor.NoAutoPilot
+          }
+      })
 
-      describe("when green light used to be turned on") {
-
+      intercept[ManagerSystemErrorAlertException] {
+        managerRef.receive(ManagerError)
       }
     }
 
-    describe("when given vector describes 4-roads crossroad") {
-      describe("when there are less than 10 traffic lights states in the history") {
+    "ComputeNewState valid data" in {
+      val probe = TestProbe()
 
-      }
+      val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
+        override def createFirstState(): Map[ActorRef, Light] = {
+          val firstState = Map[ActorRef, Light] ((probe.ref, Light.RED))
+          firstState
+        }
+      })
 
-      describe("when green light didn't use to be turned on") {
+      val state =  new TrafficLightState(
+        probe.ref,
+        Roads.A,
+        Vector[Light](Light.RED),
+        Map[Lanes, Long]((Lanes.L, 10))
+      )
+      val responseTrafficStateData = TrafficLightDataResponse(state)
 
-      }
+      probe.setAutoPilot(new TestActor.AutoPilot {
+        def run(sender: ActorRef, msg: Any): TestActor.AutoPilot =
+          msg match {
+            case GetTrafficLightData => sender ! responseTrafficStateData; TestActor.KeepRunning
+            case _ => TestActor.NoAutoPilot
+          }
+      })
 
-      describe("when green light used to be turned on") {
-
-      }
+      managerRef ! ComputeNewState
+      probe.expectMsg(GetTrafficLightData)
+      probe.expectMsg(UpdateActiveLight(Light.GREEN))
     }
   }
 }
