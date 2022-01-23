@@ -22,7 +22,7 @@ class LaneCounterTests extends TestKit(ActorSystem("TestKitUsageSpec"))
     shutdown()
   }
 
-  "A Lane Counter actor should return valid cars count" should {
+  "Lane counter" should {
     "Returns initial cars count" in {
         val expectedResponse = CarNumberResponse(0, Lanes.L)
         val laneCounterRef = TestActorRef(Props(new LaneCounter("junctionId", Roads.A, Lanes.L)))
