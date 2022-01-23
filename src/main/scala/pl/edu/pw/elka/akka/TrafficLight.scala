@@ -88,7 +88,7 @@ class TrafficLight(val junctionID: String, val roadId: Roads, val lights: Lights
       throw new RuntimeException("traffic light system error occurred")
   }
 
-  private def createLaneCounters(): Vector[ActorRef]= {
+  def createLaneCounters(): Vector[ActorRef]= {
     var counters = Vector.empty[ActorRef]
 
     if (lights.state.equals(Lights.L.state)){
