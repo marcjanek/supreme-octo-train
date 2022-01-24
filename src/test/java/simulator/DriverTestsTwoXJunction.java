@@ -18,7 +18,8 @@ import pl.edu.pw.elka.simulator.Driver;
 
 public class DriverTestsTwoXJunction {
 
-	private final DeterministicGeneratorMock randomGenerator = new DeterministicGeneratorMock(0, new ArrayList<>());
+	private final DeterministicGeneratorMock nextLaneRandomGenerator = new DeterministicGeneratorMock(0, new ArrayList<>());
+	private final DeterministicGeneratorMock passedCarsRandomGenerator = new DeterministicGeneratorMock(10, new ArrayList<>());
 	private Database database = null;
 
 	private final Coordinate threeCarsOnRightLane = new Coordinate("1", Roads.D.name(), Lanes.P1.name());
@@ -41,7 +42,7 @@ public class DriverTestsTwoXJunction {
 
 	@Test
 	public void shouldNotMoveIfAllLightsAreRed() {
-		Driver driver = new Driver(database, randomGenerator);
+		Driver driver = new Driver(database, nextLaneRandomGenerator, passedCarsRandomGenerator);
 		driver.run();
 		final Set<Coordinate> nonZeroCarNumbers = Stream.of(threeCarsOnRightLane, twoCarsOnStraightLane, threeCarsOnLeftLane)
 				.collect(Collectors.toSet());
@@ -59,8 +60,8 @@ public class DriverTestsTwoXJunction {
 
 	@Test
 	public void shouldMoveAllCarsToNextLanesIfAllLightsAreGreen() {
-		Driver driver = new Driver(database, randomGenerator);
-		randomGenerator.defaultIntVal = 0; //should all cars be on left lane after riding by a junction
+		Driver driver = new Driver(database, nextLaneRandomGenerator, passedCarsRandomGenerator);
+		nextLaneRandomGenerator.defaultIntVal = 0; //should all cars be on left lane after riding by a junction
 		Coordinate fiveCarsFromLeftAndStraight = new Coordinate("2", Roads.D.name(), Lanes.L.name());
 
 		database.getLaneCoordinates().forEach(c -> database.setTrafficLight(c, Light.GREEN));
@@ -77,8 +78,8 @@ public class DriverTestsTwoXJunction {
 
 	@Test
 	public void shouldMoveStraightAndRightCarsToNextLanesIfOnlyStraightAndRightLightsAreGreen() {
-		Driver driver = new Driver(database, randomGenerator);
-		randomGenerator.defaultIntVal = 2; //should all cars be on straight lane after riding by a junction
+		Driver driver = new Driver(database, nextLaneRandomGenerator, passedCarsRandomGenerator);
+		nextLaneRandomGenerator.defaultIntVal = 2; //should all cars be on straight lane after riding by a junction
 		Coordinate twoFromStraight = new Coordinate("2", Roads.D.name(), Lanes.P2.name());
 		final Set<Coordinate> nonZeroCarNumbers = Stream.of(twoFromStraight, threeCarsOnLeftLane, threeCarsOnRightLane)
 				.collect(Collectors.toSet());

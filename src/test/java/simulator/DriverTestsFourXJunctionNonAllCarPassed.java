@@ -4,13 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -30,17 +29,17 @@ import pl.edu.pw.elka.simulator.Driver;
  * s  X4
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestMethodOrder(OrderAnnotation.class)
-public class DriverTestsFourXJunction {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+public class DriverTestsFourXJunctionNonAllCarPassed {
 
 	private final DeterministicGeneratorMock nextLaneRandomGenerator = new DeterministicGeneratorMock(0, new ArrayList<>());
-	private final DeterministicGeneratorMock passedCarsRandomGenerator = new DeterministicGeneratorMock(10, new ArrayList<>());
+	private final DeterministicGeneratorMock passedCarsRandomGenerator = new DeterministicGeneratorMock(0, new ArrayList<>());
 
 	private final Database database = new Database();
 	private final Driver driver = new Driver(database, nextLaneRandomGenerator, passedCarsRandomGenerator);
 
-	private final Coordinate threeCarsStraight = new Coordinate("3", Roads.A.name(), Lanes.P2.name());
-	private final Coordinate oneCarLeft = new Coordinate("3", Roads.A.name(), Lanes.L.name());
+	private final Coordinate twentyCarsStraight = new Coordinate("3", Roads.A.name(), Lanes.P2.name());
+	private final Coordinate tenCarsLeft = new Coordinate("3", Roads.A.name(), Lanes.L.name());
 
 	@BeforeAll
 	void setup() {
@@ -54,7 +53,6 @@ public class DriverTestsFourXJunction {
 
 		database.getLaneCoordinates().forEach(c -> database.setCarsNumber(c, 0L));
 		database.getLaneCoordinates().forEach(c -> database.setTrafficLight(c, Light.RED));
-
 	}
 
 	@BeforeEach
@@ -73,16 +71,18 @@ public class DriverTestsFourXJunction {
 
 	@Test
 	@Order(2)
-	void shouldOneCarTurnLeftAndGoneAndOtherRunStraightToX2() {
-		database.setCarsNumber(threeCarsStraight, 3L);
-		database.setCarsNumber(oneCarLeft, 1L);
+	void should3CarsTurnsLeftAndGoneAnd10RunsStraightToX2() {
+		database.setCarsNumber(twentyCarsStraight, 20L);
+		database.setCarsNumber(tenCarsLeft, 10L);
 
-		List<Integer> nextLaneRandomGeneratorValues = Arrays.asList(0, 1, 2);//left, right, straight
-		List<Integer> passedCarsRandomGenerator = Collections.emptyList();
+		List<Integer> nextLaneRandomGeneratorValues = Arrays.asList(0, 0, 0, 1, 1, 1, 2, 2, 2, 2);//3left, 3right, 4straight
+		List<Integer> passedCarsRandomGenerator = Arrays.asList(3, 10);
 		final Map<Coordinate, Long> coordinatesToCarNumbers = new HashMap<>();
-		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P1.name()), 1L);
-		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P2.name()), 1L);
-		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.L.name()), 1L);
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P1.name()), 3L);
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P2.name()), 4L);
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.L.name()), 3L);
+		coordinatesToCarNumbers.put(twentyCarsStraight, 10L);
+		coordinatesToCarNumbers.put(tenCarsLeft, 7L);
 
 		List<Coordinate> greenLights = Arrays.asList(new Coordinate("3", Roads.A.name(), Lanes.P2.name()),
 				new Coordinate("3", Roads.A.name(), Lanes.L.name()));
@@ -92,29 +92,62 @@ public class DriverTestsFourXJunction {
 
 	@Test
 	@Order(3)
-	void shouldOneCarTurnToX4OneRunStraightToX1AndOneTurnRightAndGone() {
-		List<Integer> nextLaneRandomGeneratorValues = Arrays.asList(2, 0);
-		List<Integer> passedCarsRandomGenerator = Collections.emptyList();// straight, left
+	void shouldZeroCarsTurnsToX4ThreeRunsStraightToX1And1TurnRightAndGone() {
+		List<Integer> nextLaneRandomGeneratorValues = Arrays.asList(0, 1, 2); // X1 left, right, straight
+		List<Integer> passedCarsRandomGenerator = Arrays.asList(3, 0, 55, 1);
+		// tree straight, zero left, 55 on X4 but no cars there, 1 right
+
 		final Map<Coordinate, Long> coordinatesToCarNumbers = new HashMap<>();
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P1.name()), 2L);
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P2.name()), 1L);
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.L.name()), 3L);
+		coordinatesToCarNumbers.put(new Coordinate("1", Roads.A.name(), Lanes.P1.name()), 1L);
 		coordinatesToCarNumbers.put(new Coordinate("1", Roads.A.name(), Lanes.P2.name()), 1L);
-		coordinatesToCarNumbers.put(new Coordinate("4", Roads.D.name(), Lanes.L.name()), 1L);
+		coordinatesToCarNumbers.put(new Coordinate("1", Roads.A.name(), Lanes.L.name()), 1L);
+		coordinatesToCarNumbers.put(twentyCarsStraight, 10L);
+		coordinatesToCarNumbers.put(tenCarsLeft, 7L);
 
 		List<Coordinate> greenLights = Arrays.asList(new Coordinate("2", Roads.A.name(), Lanes.P1.name()),
-				new Coordinate("2", Roads.A.name(), Lanes.P2.name()), new Coordinate("2", Roads.A.name(), Lanes.L.name()));
+				new Coordinate("2", Roads.A.name(), Lanes.P2.name()), new Coordinate("2", Roads.A.name(), Lanes.L.name()),
+				new Coordinate("4", Roads.A.name(), Lanes.P1.name()));
 
 		performTurn(coordinatesToCarNumbers, nextLaneRandomGeneratorValues, passedCarsRandomGenerator, greenLights);
 	}
 
 	@Test
 	@Order(4)
-	void shouldOneCarTurnLeftAndGoneAndOtherRunStraightAndGone() {
-		List<Integer> nextLaneRandomGeneratorValues = Collections.emptyList();
-		List<Integer> passedCarsRandomGenerator = Collections.emptyList();
-		final Map<Coordinate, Long> coordinatesToCarNumbers = new HashMap<>();
+	void shouldPass10CarsRightAndGone6LeftAndGone3PassToX4AndPass2CarsRightFromX2() {
+		List<Integer> nextLaneRandomGeneratorValues = Arrays.asList(0, 0, 1, // 2 A/L
+				1, 1, 1, 1, 1, 1, 2, 2, 2, 2 // 3 A/P2
+		);
+		List<Integer> passedCarsRandomGenerator = Arrays.asList(6, //3 A/L
+				0, //4 D/L
+				3, //2 A/L
+				10,//3 A/P2
+				2 //2 A/P1
+		);
 
-		List<Coordinate> greenLights = Arrays.asList(new Coordinate("2", Roads.A.name(), Lanes.P2.name()),
-				new Coordinate("2", Roads.A.name(), Lanes.L.name()), new Coordinate("1", Roads.A.name(), Lanes.P2.name()),
-				new Coordinate("4", Roads.D.name(), Lanes.L.name()));
+		final Map<Coordinate, Long> coordinatesToCarNumbers = new HashMap<>();
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P1.name()), 6L);
+		coordinatesToCarNumbers.put(new Coordinate("2", Roads.A.name(), Lanes.P2.name()), 5L); //4 from 3A, one was there before
+
+		coordinatesToCarNumbers.put(new Coordinate("4", Roads.D.name(), Lanes.L.name()), 2L);
+		coordinatesToCarNumbers.put(new Coordinate("4", Roads.D.name(), Lanes.P1.name()), 1L);
+
+		coordinatesToCarNumbers.put(new Coordinate("3", Roads.A.name(), Lanes.L.name()), 1L);
+
+		coordinatesToCarNumbers.put(new Coordinate("1", Roads.A.name(), Lanes.P1.name()), 1L);
+		coordinatesToCarNumbers.put(new Coordinate("1", Roads.A.name(), Lanes.P2.name()), 1L);
+		coordinatesToCarNumbers.put(new Coordinate("1", Roads.A.name(), Lanes.L.name()), 1L);
+
+		coordinatesToCarNumbers.put(twentyCarsStraight, 0L);
+		coordinatesToCarNumbers.put(tenCarsLeft, 1L);
+
+		List<Coordinate> greenLights = Arrays.asList(twentyCarsStraight, //pass all 10 cars
+				tenCarsLeft, //pass 6 cars from 7
+				new Coordinate("2", Roads.A.name(), Lanes.L.name()),//pass all 3
+				new Coordinate("4", Roads.D.name(), Lanes.L.name()), //no cars there
+				new Coordinate("2", Roads.A.name(), Lanes.P1.name()));//pass 2 cars
 
 		performTurn(coordinatesToCarNumbers, nextLaneRandomGeneratorValues, passedCarsRandomGenerator, greenLights);
 	}
@@ -137,3 +170,4 @@ public class DriverTestsFourXJunction {
 	}
 
 }
+

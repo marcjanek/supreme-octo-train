@@ -22,7 +22,7 @@ class DeterministicGeneratorMock extends Random {
 
 	@Override
 	public int nextInt(int range) {
-		return Optional.ofNullable(nextIntValues.poll()).orElse(defaultIntVal);
+		return Math.min(Optional.ofNullable(nextIntValues.poll()).orElse(defaultIntVal), range);
 	}
 
 }
