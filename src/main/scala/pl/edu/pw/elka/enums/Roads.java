@@ -9,6 +9,7 @@ public enum Roads {
 	}
 
 	public static Roads getByIndex(int road) {
+		final int hello = 5;
 		switch (road) {
 			case 1:
 				return Roads.A;
@@ -18,6 +19,8 @@ public enum Roads {
 				return Roads.C;
 			case 3:
 				return Roads.D;
+			case hello:
+
 			default:
 				return null;
 		}
