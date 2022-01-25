@@ -9,22 +9,27 @@ import pl.edu.pw.elka.database.Database;
 public class CarGenerator extends TimerTask {
 
 	private final Database databaseRef;
-	private final Random randomGenerator;
+	private final Random coordinateGenerator;
+	private final Random carCountGenerator;
 	private final Integer maxCars;
 
-	public CarGenerator(Database databaseRef, Random randomGenerator, Integer maxCars) {
+	public CarGenerator(Database databaseRef, Integer maxCars, Random coordinateGenerator, Random carCountGenerator) {
 		this.databaseRef = databaseRef;
-		this.randomGenerator = randomGenerator;
-		this.maxCars = maxCars;//TODO now now used - remove or use it
+		this.coordinateGenerator = coordinateGenerator;
+		this.carCountGenerator = carCountGenerator;
+		this.maxCars = maxCars;
 	}
 
 	@Override
-	public void run() {//FIXME problems with racing with Driver class
+	public void run() {
 		List<Coordinate> borderLanes = databaseRef.listBorderLanes();
-		int chosenIdx = randomGenerator.nextInt(borderLanes.size());
+		int chosenIdx = coordinateGenerator.nextInt(borderLanes.size());
 		Coordinate chosen = borderLanes.get(chosenIdx);
 
-		databaseRef.setCarsNumber(chosen, databaseRef.getCarsNumber(chosen) + 1);
+		Long actualCarNumbers = databaseRef.getCarsNumber(chosen);
+		int carsToAdd = carCountGenerator.nextInt(this.maxCars);
+
+		databaseRef.setCarsNumber(chosen, actualCarNumbers + carsToAdd);
 	}
 
 }

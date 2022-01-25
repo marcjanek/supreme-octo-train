@@ -24,10 +24,18 @@ public class Main {
 		Junction x2 = database.createXJunction("2");
 		Junction x3 = database.createXJunction("3");
 		Junction x4 = database.createXJunction("4");
+
 		database.match(x1, x2, Roads.B, Roads.D);
+		database.match(x2, x1, Roads.D, Roads.B);
+
 		database.match(x1, x3, Roads.C, Roads.A);
+		database.match(x3, x1, Roads.A, Roads.C);
+
 		database.match(x3, x4, Roads.B, Roads.D);
+		database.match(x4, x3, Roads.D, Roads.B);
+
 		database.match(x2, x4, Roads.C, Roads.A);
+		database.match(x4, x2, Roads.A, Roads.C);
 
 		//        terrain config
 		terrain = new Terrain();
@@ -38,7 +46,7 @@ public class Main {
 		//        config database with visualization
 		new Timer().schedule(new TerrainDrawer(database, terrain), 0, 1000); // Create Repetitively task for every 1 secs
 		//        Akka
-		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 500);
+		new Timer().schedule(new CarGenerator(database, 10, new Random(), new Random()), 0, 1000);
 
 		new Timer().schedule(new Driver(database, new Random(), new GaussianRandomGenerator()), 0, 2000);
 
