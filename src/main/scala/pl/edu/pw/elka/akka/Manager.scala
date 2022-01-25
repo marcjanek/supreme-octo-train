@@ -78,7 +78,7 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
 
       val states = getNeighboursStates
 
-      val newState = new Planner(newData).plan
+      val newState = new Planner(newData, states).plan
       for ((trafficLight, newLight) <- newState) {
         trafficLight ! UpdateActiveLight(newLight)
       }

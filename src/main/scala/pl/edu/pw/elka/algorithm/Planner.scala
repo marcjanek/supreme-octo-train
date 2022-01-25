@@ -5,7 +5,7 @@ import scala.util.control.Breaks._
 import pl.edu.pw.elka.akka.TrafficLightState
 import pl.edu.pw.elka.enums._
 
-class Planner(val crossroad: Vector[TrafficLightState]) {
+class Planner(val crossroad: Vector[TrafficLightState], val neighbours: Map[Roads, Vector[TrafficLightState]]) {
   def plan: Map[ActorRef, Light] = {
     if (crossroad.isEmpty) {
       return Map[ActorRef, Light]()
@@ -16,11 +16,17 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
     for (i <- crossroad.indices) {
       val carsOnLane = crossroad(i).counters.values.sum
       val planningBoost = crossroad(i).counters.size
+      val currentNeighbour = neighbours(Roads.getByIndex(3 - crossroad(i).road.getIndex))
 
       scores = scores.updated(
         i,
         new ScoreObject(
-          score(carsOnLane, crossroad(i).historyData, planningBoost),
+          score(
+            carsOnLane,
+            crossroad(i),
+            planningBoost,
+            currentNeighbour
+          ),
           crossroad(i)
         )
       )
@@ -74,28 +80,52 @@ class Planner(val crossroad: Vector[TrafficLightState]) {
 
   private def calculateOfferScore(offer: Vector[ScoreObject]): Double = offer.map { x => x.score }.sum
 
-  private def score(carsOnLane: Long, trafficLightsHistory: Vector[Light], planningBoost: Int): Double = {
+  private def calculateNeighbourFactor(currentTrafficLights: TrafficLightState, neighbour: Vector[TrafficLightState]): Long = {
+    val currentTrafficLightsIndex = currentTrafficLights.road.getOrderedIndex
+    var numberOfCars : Long = 0
+
+    for (trafficLight <- neighbour) {
+      val neighbourIndex = trafficLight.road.getOrderedIndex
+      val counters = trafficLight.counters.withDefaultValue(0)
+
+      if (neighbourIndex == currentTrafficLightsIndex) { // straight
+        numberOfCars = numberOfCars + counters(Lanes.P1) + counters(Lanes.P2)
+      } else if (neighbourIndex == ((currentTrafficLightsIndex + 1) % 4)) { // left
+        numberOfCars = numberOfCars + counters(Lanes.L)
+      } else if (neighbourIndex == ((currentTrafficLightsIndex + 3) % 4)) { // right
+        numberOfCars = numberOfCars + counters(Lanes.P2)
+      }
+    }
+
+    numberOfCars
+  }
+
+  private def score(
+                     carsOnLane: Long,
+                     trafficLightState: TrafficLightState,
+                     planningBoost: Int,
+                     neighbour: Vector[TrafficLightState]
+                   ): Double = {
+    val trafficLightsHistory = trafficLightState.historyData
     val trafficLightsHistoryValues = trafficLightsHistory.map(x => x.getValue)
     var sum: Double = 0.0
+    val neighbourFactor = calculateNeighbourFactor(trafficLightState, neighbour)
 
     var recentGreenLightIndex: Int = trafficLightsHistory.indexOf(Light.GREEN)
     if (recentGreenLightIndex == -1) recentGreenLightIndex = trafficLightsHistory.length
-
 
     for (i <- trafficLightsHistoryValues.indices) {
       sum = sum + ((trafficLightsHistory.length - i) * trafficLightsHistoryValues(i))
     }
 
-    ((recentGreenLightIndex + 1) * math.sqrt(carsOnLane) / math.sqrt(sum + 1)) + planningBoost
+    ((recentGreenLightIndex + 1) * math.sqrt(5 * carsOnLane + neighbourFactor) / math.sqrt(sum + 1)) + planningBoost
   }
 
   private def checkCollision(winner: TrafficLightState, candidate: TrafficLightState): Boolean = {
-    (
-      !(
-        (winner.road.getIndex + candidate.road.getIndex == 3) &&
-        (winner.counters.keys.toList.contains(Lanes.L) == candidate.counters.keys.toList.contains(Lanes.L))
-       || (winner.road == candidate.road))
-      )
+    !(
+      (winner.road.getIndex + candidate.road.getIndex == 3) &&
+      (winner.counters.keys.toList.contains(Lanes.L) == candidate.counters.keys.toList.contains(Lanes.L))
+     || (winner.road == candidate.road))
   }
 }
 
