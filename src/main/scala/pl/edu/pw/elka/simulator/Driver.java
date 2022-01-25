@@ -69,8 +69,6 @@ public class Driver extends TimerTask {
 		int carsPassed = this.passedCarsRandomGenerator.nextInt(carNumbers.intValue());
 		Map<Coordinate, Long> increaseCarNumbersInCoordinates = nextJunctionAndRoad.map(
 				junctionAndRoad -> this.computeIncreaseCarNumbersInNextLane(junctionAndRoad, carsPassed)).orElseGet(HashMap::new);
-//		int carPassed = (int) increaseCarNumbersInCoordinates.values().stream().mapToLong(Long::longValue).sum();//gdy  increaseCarNumbersInCoordinates.empty() to to jest zawsze zerem
-
 
 		databaseRef.setCarsNumber(laneCoordinate, carNumbers - carsPassed); //TODO release cars partially, not all from lane
 		return increaseCarNumbersInCoordinates;
