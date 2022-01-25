@@ -87,7 +87,7 @@ public class GaussianRandomGeneratorTest {
 		Map<Integer, Long> occurrencesMap = generated.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 		int leastProbableValue = occurrencesMap.entrySet().stream().min(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(range);
 
-//		Assertions.assertEquals(0, leastProbableValue); nie działa, z jakeigos powodu 0 wychodzi dośc często
+		Assertions.assertEquals(0, leastProbableValue);
 	}
 
 }

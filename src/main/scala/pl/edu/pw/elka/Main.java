@@ -40,7 +40,7 @@ public class Main {
 		//        Akka
 		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 500);
 
-		new Timer().schedule(new Driver(database, new Random(), new GaussianRandomGenerator(1)), 0, 2000);
+		new Timer().schedule(new Driver(database, new Random(), new GaussianRandomGenerator()), 0, 2000);
 
 		pl.edu.pw.elka.akka.Main.main();
 	}

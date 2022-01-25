@@ -11,7 +11,7 @@ public class GaussianRandomGenerator extends Random {
 	@Override
 	public int nextInt(int carNumbers) {
 		int mean = carNumbers;
-		double variance = (carNumbers - 1) * (carNumbers - 1) / 9.0;
+		double variance = (carNumbers * carNumbers) / 36.0;
 		double standardGaussian = super.nextGaussian();
 		final double randomGaussianValue = standardGaussian * variance + mean;
 		int finalValue = Math.min((int) randomGaussianValue, carNumbers);
