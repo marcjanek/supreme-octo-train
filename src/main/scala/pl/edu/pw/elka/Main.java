@@ -8,6 +8,7 @@ import pl.edu.pw.elka.drawer.TerrainDrawer;
 import pl.edu.pw.elka.enums.Roads;
 import pl.edu.pw.elka.simulator.CarGenerator;
 import pl.edu.pw.elka.knowledgeDatabase.Junction;
+import pl.edu.pw.elka.simulator.GaussianRandomGenerator;
 import pl.edu.pw.elka.terrain.Terrain;
 import pl.edu.pw.elka.terrain.XJunction;
 
@@ -32,7 +33,7 @@ public class Main {
 		//        Akka
 		new Timer().schedule(new CarGenerator(database, new Random(), 1), 0, 500);
 
-		new Timer().schedule(new Driver(database, new Random()), 0, 5000);
+		new Timer().schedule(new Driver(database, new Random(), new GaussianRandomGenerator(1)), 0, 2000);
 
 		pl.edu.pw.elka.akka.Main.main();
 	}

@@ -22,11 +22,13 @@ import pl.edu.pw.elka.knowledgeDatabase.Junction;
 public class Driver extends TimerTask {
 
 	private final Database databaseRef;
-	private final Random randomGenerator;
+	private final Random nextLaneRandomGenerator;
+	private final Random passedCarsRandomGenerator;
 
-	public Driver(Database databaseRef, Random randomGenerator) {
+	public Driver(Database databaseRef, Random nextLaneRandomGenerator, Random passedCarsRandomGenerator) {
 		this.databaseRef = databaseRef;
-		this.randomGenerator = randomGenerator;
+		this.nextLaneRandomGenerator = nextLaneRandomGenerator;
+		this.passedCarsRandomGenerator = passedCarsRandomGenerator;
 	}
 
 	@Override
@@ -64,22 +66,25 @@ public class Driver extends TimerTask {
 		Optional<JunctionMatching> nextJunctionAndRoad = databaseRef.getMatchedRoad(nextRoadInJunction.getJunction(),
 				nextRoadInJunction.getRoad());
 
+		int carsPassed = this.passedCarsRandomGenerator.nextInt(carNumbers.intValue());
 		Map<Coordinate, Long> increaseCarNumbersInCoordinates = nextJunctionAndRoad.map(
-				junctionAndRoad -> this.computeIncreaseCarNumbersInNextLane(junctionAndRoad, carNumbers)).orElseGet(HashMap::new);
+				junctionAndRoad -> this.computeIncreaseCarNumbersInNextLane(junctionAndRoad, carsPassed)).orElseGet(HashMap::new);
+//		int carPassed = (int) increaseCarNumbersInCoordinates.values().stream().mapToLong(Long::longValue).sum();//gdy  increaseCarNumbersInCoordinates.empty() to to jest zawsze zerem
 
-		databaseRef.setCarsNumber(laneCoordinate, 0L); //TODO release cars partially, not all from lane
+
+		databaseRef.setCarsNumber(laneCoordinate, carNumbers - carsPassed); //TODO release cars partially, not all from lane
 		return increaseCarNumbersInCoordinates;
 	}
 
-	protected Map<Coordinate, Long> computeIncreaseCarNumbersInNextLane(JunctionMatching nextJunctionAndRoad, long carNumbers) {
-		return Collections.nCopies((int) carNumbers, nextJunctionAndRoad)
+	protected Map<Coordinate, Long> computeIncreaseCarNumbersInNextLane(JunctionMatching nextJunctionAndRoad, int carsPassed) {
+		return Collections.nCopies(carsPassed, nextJunctionAndRoad)
 				.stream()
 				.map(jm -> new Coordinate(jm.getJunctionB(), jm.getRoadB(), this.randomLane()))
 				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 	}
 
 	protected String randomLane() {
-		return Lanes.getByIndex(randomGenerator.nextInt(Lanes.values().length));
+		return Lanes.getByIndex(nextLaneRandomGenerator.nextInt(Lanes.values().length));
 	}
 
 	protected static class CarsAggregation {
