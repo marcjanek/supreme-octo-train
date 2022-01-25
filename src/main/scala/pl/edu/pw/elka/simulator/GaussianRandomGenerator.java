@@ -1,21 +1,27 @@
 package pl.edu.pw.elka.simulator;
 
-import java.util.Optional;
 import java.util.Random;
 
+/**
+ * Override method used by Driver to get random number of passed cars
+ * Use gaussian distribution with mean == argument_nextInt
+ * and sigma^2 along with 3 sigma rules (ends range at 0)
+ *
+ * Instead of normal gaussian value all values more than argument_nextInt are not returned, but argument_nextInt is return.
+ *
+ * So the most possible is get value == argument_nextInt (mean of gaussian distribution + all density of right side of gaussian)
+ * Least - 0
+ */
 public class GaussianRandomGenerator extends Random {
 
-	private final Integer meanDifference;
-
-	public GaussianRandomGenerator(Integer meanDifference) {
+	public GaussianRandomGenerator() {
 		super();
-		this.meanDifference = Optional.ofNullable(meanDifference).orElse(1);
 	}
 
 	@Override
 	public int nextInt(int carNumbers) {
-		int mean = carNumbers - meanDifference;
-		double variance = (carNumbers - 1) * (carNumbers - 1) / 9.0;//(carNumbers * carNumbers) / 36.0;
+		int mean = carNumbers;
+		double variance = (carNumbers * carNumbers) / 36.0;
 		double standardGaussian = super.nextGaussian();
 		final double randomGaussianValue = standardGaussian * variance + mean;
 		int finalValue = Math.min((int) randomGaussianValue, carNumbers);
