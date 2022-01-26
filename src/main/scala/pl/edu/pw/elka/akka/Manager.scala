@@ -76,7 +76,7 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
         }
       }
 
-      val states = getNeighboursStates
+      val states = getNeighboursStates(neighbours)
 
       val newState = new Planner(newData, states).plan
       for ((trafficLight, newLight) <- newState) {
@@ -117,14 +117,24 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
     firstState
   }
 
-  private def getNeighboursStates: Map[Roads, Vector[TrafficLightState]] = {
+  def createFirstData(): Vector[TrafficLightState] = {
+    var firstState = Vector.empty[TrafficLightState]
+
+    firstState
+  }
+
+  private def getNeighboursStates(neighbours:  Map[Roads, ActorRef]): Map[Roads, Vector[TrafficLightState]] = {
     var neighboursData = Map.empty[Roads, Vector[TrafficLightState]]
+    if (neighbours == null) {
+
+    }
     for((road, neighbour) <- neighbours) {
       val nd = Await.result(neighbour ? GetNeighbourData, 5 seconds).asInstanceOf[GetNeighbourDataResponse]
       neighboursData = neighboursData + (road -> nd.NeighbourData)
     }
     neighboursData
   }
+
 }
 
 class TrafficLightState (
