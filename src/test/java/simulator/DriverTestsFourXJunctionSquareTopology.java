@@ -150,8 +150,6 @@ public class DriverTestsFourXJunctionSquareTopology {
 	@Test
 	@Order(3)
 	void shouldPerformSecondTurn() {
-		//		secondTurnCars.forEach(database::setCarsNumber);
-
 		List<Integer> nextLaneRandomGeneratorValues = Arrays.asList(1, 1, 1,// (0)
 				0,// (2)
 				1, 1, 1, 1, 1, // (5)
