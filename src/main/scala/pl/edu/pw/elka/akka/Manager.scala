@@ -119,6 +119,9 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
 
   private def getNeighboursStates: Map[Roads, Vector[TrafficLightState]] = {
     var neighboursData = Map.empty[Roads, Vector[TrafficLightState]]
+    if (neighbours == null) {
+
+    }
     for((road, neighbour) <- neighbours) {
       val nd = Await.result(neighbour ? GetNeighbourData, 5 seconds).asInstanceOf[GetNeighbourDataResponse]
       neighboursData = neighboursData + (road -> nd.NeighbourData)
