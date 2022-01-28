@@ -95,13 +95,13 @@ object Main {
 
     managerRegistry ! NewManager(JunctionType.X, "1")
     managerRegistry ! NewManager(JunctionType.X, "2")
-    managerRegistry ! NewManager(JunctionType.X, "3")
-    managerRegistry ! NewManager(JunctionType.X, "4")
+//    managerRegistry ! NewManager(JunctionType.X, "3")
+//    managerRegistry ! NewManager(JunctionType.X, "4")
 
-    managerRegistry ! addNeighbour("1", Map(Roads.B -> "2", Roads.C -> "3"))
-    managerRegistry ! addNeighbour("2", Map(Roads.D -> "1", Roads.C-> "4"))
-    managerRegistry ! addNeighbour("3", Map(Roads.A -> "1", Roads.B-> "4"))
-    managerRegistry ! addNeighbour("4", Map(Roads.A -> "2", Roads.D-> "3"))
+    managerRegistry ! addNeighbour("1", Map(Roads.B -> "2"))
+    managerRegistry ! addNeighbour("2", Map(Roads.D -> "1"))
+//    managerRegistry ! addNeighbour("3", Map(Roads.A -> "1", Roads.B-> "4"))
+//    managerRegistry ! addNeighbour("4", Map(Roads.A -> "2", Roads.D-> "3"))
 
     import system.dispatcher
 
