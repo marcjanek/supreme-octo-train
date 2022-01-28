@@ -12,11 +12,12 @@ class Planner(val crossroad: Vector[TrafficLightState], val neighbours: Map[Road
     }
 
     var scores = Vector.fill[ScoreObject](crossroad.length)(null)
+    val allNeighbours = neighbours.withDefaultValue(None)
 
     for (i <- crossroad.indices) {
       val carsOnLane = crossroad(i).counters.values.sum
       val planningBoost = crossroad(i).counters.size
-      val currentNeighbour = neighbours(Roads.getByIndex(3 - crossroad(i).road.getIndex))
+      val currentNeighbour = allNeighbours(Roads.getByIndex(3 - crossroad(i).road.getIndex))
 
       scores = scores.updated(
         i,
@@ -89,11 +90,11 @@ class Planner(val crossroad: Vector[TrafficLightState], val neighbours: Map[Road
       val counters = trafficLight.counters.withDefaultValue(0)
 
       if (neighbourIndex == currentTrafficLightsIndex) { // straight
-        numberOfCars = numberOfCars + counters(Lanes.P1) + counters(Lanes.P2)
+        numberOfCars = numberOfCars.asInstanceOf[Long] + counters(Lanes.P1).asInstanceOf[Long] + counters(Lanes.P2).asInstanceOf[Long]
       } else if (neighbourIndex == ((currentTrafficLightsIndex + 1) % 4)) { // left
-        numberOfCars = numberOfCars + counters(Lanes.L)
+        numberOfCars = numberOfCars.asInstanceOf[Long] + counters(Lanes.L).asInstanceOf[Long]
       } else if (neighbourIndex == ((currentTrafficLightsIndex + 3) % 4)) { // right
-        numberOfCars = numberOfCars + counters(Lanes.P2)
+        numberOfCars = numberOfCars.asInstanceOf[Long] + counters(Lanes.P2).asInstanceOf[Long]
       }
     }
 
@@ -104,12 +105,16 @@ class Planner(val crossroad: Vector[TrafficLightState], val neighbours: Map[Road
                      carsOnLane: Long,
                      trafficLightState: TrafficLightState,
                      planningBoost: Int,
-                     neighbour: Vector[TrafficLightState]
+                     neighbour: Object
                    ): Double = {
     val trafficLightsHistory = trafficLightState.historyData
     val trafficLightsHistoryValues = trafficLightsHistory.map(x => x.getValue)
     var sum: Double = 0.0
-    val neighbourFactor = calculateNeighbourFactor(trafficLightState, neighbour)
+    var neighbourFactor : Long = 0
+
+    if (!(neighbour == None)) {
+      neighbourFactor = calculateNeighbourFactor(trafficLightState, neighbour.asInstanceOf[Vector[TrafficLightState]])
+    }
 
     var recentGreenLightIndex: Int = trafficLightsHistory.indexOf(Light.GREEN)
     if (recentGreenLightIndex == -1) recentGreenLightIndex = trafficLightsHistory.length

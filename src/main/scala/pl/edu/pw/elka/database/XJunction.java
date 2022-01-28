@@ -29,6 +29,9 @@ public class XJunction extends Junction {
 				nextRoadIdx = (actRoadIdx + 2) % 4;
 				break;
 		}
+		if(nextRoadIdx < 0) {
+			nextRoadIdx += 4; //% produce negative val if arg is negative, should add division base to go into pos value
+		}
 		return Roads.getByOrderedIndex(nextRoadIdx);
 	}
 
