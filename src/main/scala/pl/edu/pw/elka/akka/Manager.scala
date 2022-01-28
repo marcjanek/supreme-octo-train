@@ -58,7 +58,7 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
   private def onMessage(state: Map[ActorRef, Light]): Receive = {
     case ComputeNewState =>
       val crossroadData = getCrossroadData(state)
-      val s = Await.result(sender() ? getNeighbours(self), 5 seconds).asInstanceOf[neighboursStates]
+      val s = getNeighboursDataAsync()
 
       val newState = new Planner(crossroadData, s.states).plan
       for ((trafficLight, newLight) <- newState) {
@@ -93,6 +93,10 @@ class Manager(val junctionType: JunctionType, val junctionID: String) extends Ac
       }
     }
     firstState
+  }
+
+  def getNeighboursDataAsync(): neighboursStates = {
+    Await.result(sender() ? getNeighbours(self), 5 seconds).asInstanceOf[neighboursStates]
   }
 
   private def getCrossroadData(state: Map[ActorRef, Light]): Vector[TrafficLightState] = {

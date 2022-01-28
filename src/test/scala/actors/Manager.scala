@@ -2,13 +2,13 @@ package actors
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestActor, TestActorRef, TestKit, TestProbe}
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, stats}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.specs2.execute.StandardResults.success
 import pl.edu.pw.elka.akka.{Manager, ManagerRegistry, ManagerSystemErrorAlertException, TrafficLightEmergencyAlertException, TrafficLightState}
-import pl.edu.pw.elka.akka.Manager.{ComputeNewState, TrafficLightDataResponse, ErrorAlert => ManagerError}
-import pl.edu.pw.elka.akka.ManagerRegistry.runManagers
+import pl.edu.pw.elka.akka.Manager.{ComputeNewState, TrafficLightDataResponse, neighboursStates, ErrorAlert => ManagerError}
+import pl.edu.pw.elka.akka.ManagerRegistry.{getNeighbours, runManagers}
 import pl.edu.pw.elka.akka.TrafficLight.{GetTrafficLightData, UpdateActiveLight, ErrorAlert => TrafficError}
 import pl.edu.pw.elka.enums._
 
@@ -49,6 +49,7 @@ class ManagerTests extends TestKit(ActorSystem("TestKitUsageSpec"))
 
     "ComputeNewState error during computing" in {
       val probe = TestProbe()
+
       val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
         override def createFirstState(): Map[ActorRef, Light] = {
           val firstState = Map[ActorRef, Light] ((probe.ref, Light.RED))
@@ -66,33 +67,42 @@ class ManagerTests extends TestKit(ActorSystem("TestKitUsageSpec"))
       }
     }
 
-    "ComputeNewState valid data" in {
-      val probe = TestProbe()
-      val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
-        override def createFirstState(): Map[ActorRef, Light] = {
-          val firstState = Map[ActorRef, Light] ((probe.ref, Light.RED))
-          firstState
-        }
-      })
-
-      val registryRef = TestActorRef(new ManagerRegistry(Map(managerRef -> "junctionId")))
+    "ComputeNewState call proper data" in {
+      val trafficProbe = TestProbe()
 
       val state =  new TrafficLightState(
-        probe.ref,
+        trafficProbe.ref,
         Roads.A,
         Vector[Light](Light.RED),
         Map[Lanes, Long]((Lanes.L, 10))
       )
+
+      val responseNeighboursStates = new neighboursStates(
+        Map[Roads, Vector[TrafficLightState]]
+          ((state.road, Vector[TrafficLightState](state)))
+      )
+
       val responseTrafficStateData = TrafficLightDataResponse(state)
 
-      probe.setAutoPilot((sender: ActorRef, msg: Any) => msg match {
-        case GetTrafficLightData => sender ! responseTrafficStateData; TestActor.KeepRunning
+      val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
+        override def createFirstState(): Map[ActorRef, Light] = {
+          val firstState = Map[ActorRef, Light] ((trafficProbe.ref, Light.RED))
+          firstState
+        }
+
+        override def getNeighboursDataAsync(): neighboursStates = {
+          responseNeighboursStates
+        }
+      })
+
+      trafficProbe.setAutoPilot((sender: ActorRef, msg: Any) => msg match {
+        case GetTrafficLightData => sender ! responseTrafficStateData; TestActor.KeepRunning;
         case _ => TestActor.NoAutoPilot
       })
 
-      registryRef ! runManagers
-      probe.expectMsg(GetTrafficLightData)
-      probe.expectMsg(UpdateActiveLight(Light.GREEN))
+      managerRef ! ComputeNewState
+      trafficProbe.expectMsg(GetTrafficLightData)
+      trafficProbe.expectMsg(UpdateActiveLight(Light.GREEN))
     }
   }
 }
