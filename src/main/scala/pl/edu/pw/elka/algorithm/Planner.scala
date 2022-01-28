@@ -87,14 +87,14 @@ class Planner(val crossroad: Vector[TrafficLightState], val neighbours: Map[Road
 
     for (trafficLight <- neighbour) {
       val neighbourIndex = trafficLight.road.getOrderedIndex
-      val counters = trafficLight.counters.withDefaultValue(0)
+      val counters = trafficLight.counters.withDefaultValue(0L)
 
       if (neighbourIndex == currentTrafficLightsIndex) { // straight
-        numberOfCars = numberOfCars.asInstanceOf[Long] + counters(Lanes.P1).asInstanceOf[Long] + counters(Lanes.P2).asInstanceOf[Long]
+        numberOfCars = numberOfCars + counters(Lanes.P1) + counters(Lanes.P2)
       } else if (neighbourIndex == ((currentTrafficLightsIndex + 1) % 4)) { // left
-        numberOfCars = numberOfCars.asInstanceOf[Long] + counters(Lanes.L).asInstanceOf[Long]
+        numberOfCars = numberOfCars + counters(Lanes.L)
       } else if (neighbourIndex == ((currentTrafficLightsIndex + 3) % 4)) { // right
-        numberOfCars = numberOfCars.asInstanceOf[Long] + counters(Lanes.P2).asInstanceOf[Long]
+        numberOfCars = numberOfCars + counters(Lanes.P2)
       }
     }
 
