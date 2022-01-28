@@ -6,8 +6,9 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.specs2.execute.StandardResults.success
-import pl.edu.pw.elka.akka.{Manager, ManagerSystemErrorAlertException, TrafficLightEmergencyAlertException, TrafficLightState}
+import pl.edu.pw.elka.akka.{Manager, ManagerRegistry, ManagerSystemErrorAlertException, TrafficLightEmergencyAlertException, TrafficLightState}
 import pl.edu.pw.elka.akka.Manager.{ComputeNewState, TrafficLightDataResponse, ErrorAlert => ManagerError}
+import pl.edu.pw.elka.akka.ManagerRegistry.runManagers
 import pl.edu.pw.elka.akka.TrafficLight.{GetTrafficLightData, UpdateActiveLight, ErrorAlert => TrafficError}
 import pl.edu.pw.elka.enums._
 
@@ -55,12 +56,9 @@ class ManagerTests extends TestKit(ActorSystem("TestKitUsageSpec"))
         }
       })
 
-      probe.setAutoPilot(new TestActor.AutoPilot {
-        def run(sender: ActorRef, msg: Any): TestActor.AutoPilot =
-          msg match {
-            case GetTrafficLightData => throw new TrafficLightEmergencyAlertException()
-            case _ => TestActor.NoAutoPilot
-          }
+      probe.setAutoPilot((sender: ActorRef, msg: Any) => msg match {
+        case GetTrafficLightData => throw new TrafficLightEmergencyAlertException()
+        case _ => TestActor.NoAutoPilot
       })
 
       intercept[ManagerSystemErrorAlertException] {
@@ -70,13 +68,14 @@ class ManagerTests extends TestKit(ActorSystem("TestKitUsageSpec"))
 
     "ComputeNewState valid data" in {
       val probe = TestProbe()
-
       val managerRef = TestActorRef(new Manager(JunctionType.X, "junctionId") {
         override def createFirstState(): Map[ActorRef, Light] = {
           val firstState = Map[ActorRef, Light] ((probe.ref, Light.RED))
           firstState
         }
       })
+
+      val registryRef = TestActorRef(new ManagerRegistry(Map(managerRef -> "junctionId")))
 
       val state =  new TrafficLightState(
         probe.ref,
@@ -86,15 +85,12 @@ class ManagerTests extends TestKit(ActorSystem("TestKitUsageSpec"))
       )
       val responseTrafficStateData = TrafficLightDataResponse(state)
 
-      probe.setAutoPilot(new TestActor.AutoPilot {
-        def run(sender: ActorRef, msg: Any): TestActor.AutoPilot =
-          msg match {
-            case GetTrafficLightData => sender ! responseTrafficStateData; TestActor.KeepRunning
-            case _ => TestActor.NoAutoPilot
-          }
+      probe.setAutoPilot((sender: ActorRef, msg: Any) => msg match {
+        case GetTrafficLightData => sender ! responseTrafficStateData; TestActor.KeepRunning
+        case _ => TestActor.NoAutoPilot
       })
 
-      managerRef ! ComputeNewState
+      registryRef ! runManagers
       probe.expectMsg(GetTrafficLightData)
       probe.expectMsg(UpdateActiveLight(Light.GREEN))
     }
